@@ -4,7 +4,7 @@ HAS_ATE=n
 # Support QA ATE function
 HAS_QA_SUPPORT=n
 
-HAS_RSSI_FEEDBACK=n
+HAS_RSSI_FEEDBACK=y
 
 # Support XLINK mode
 HAS_XLINK=n
@@ -28,7 +28,7 @@ HAS_WPA_SUPPLICANT=n
 
 # Support Native WpaSupplicant for Network Maganger
 # i.e. wpa_supplicant -Dwext
-HAS_NATIVE_WPA_SUPPLICANT_SUPPORT=n
+HAS_NATIVE_WPA_SUPPLICANT_SUPPORT=y
 
 #Support Net interface block while Tx-Sw queue full
 HAS_BLOCK_NET_IF=n
