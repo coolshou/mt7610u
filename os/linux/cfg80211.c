@@ -1409,7 +1409,8 @@ static int CFG80211_OpsPmksaFlush(
 
 struct cfg80211_ops CFG80211_Ops = {
 	/* set channel for a given wireless interface */
-	.set_channel				= CFG80211_OpsChannelSet,
+	//.set_channel				= CFG80211_OpsChannelSet, //TODO: is this fix right?
+	.set_monitor_channel = CFG80211_OpsChannelSet, //TODO: this might help, but myabe some wifi kernel guru could fix the channel setting, it still doe snot work in monitor mode.
 	/* change type/configuration of virtual interface */
 	.change_virtual_intf		= CFG80211_OpsVirtualInfChg,
 
