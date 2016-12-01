@@ -1,0 +1,16 @@
+Source: mt7610u
+Section: unknown
+Priority: optional
+Maintainer: jimmy <jimmy@jimmy-alpha>
+Build-Depends: debhelper (>=9), dh-python, dh-modaliases, gcc-4.9 | gcc-5 | gcc (>= 5.3.1)
+Standards-Version: 3.9.6
+Homepage: https://github.com/coolshou/mt7610u
+Vcs-Git: https://github.com/coolshou/mt7610u.git
+Vcs-Browser: https://github.com/coolshou/mt7610u
+
+Package: mt7610u-kernel-source
+Architecture: all
+Depends: ${shlibs:Depends}, dkms, linux-libc-dev, libc6-dev
+XB-Modaliases: ${modaliases}
+Description: MediaTek MT7610U Linux driver source
+ This package contains MediaTek MT7610U Linux driver source.
