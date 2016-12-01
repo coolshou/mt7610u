@@ -23,7 +23,7 @@ HAS_APCLI=n
 
 # Support Wpa_Supplicant
 # i.e. wpa_supplicant -Dralink
-HAS_WPA_SUPPLICANT=n
+HAS_WPA_SUPPLICANT=y
 
 
 # Support Native WpaSupplicant for Network Maganger
@@ -146,7 +146,7 @@ HAS_BGFP_SUPPORT=n
 HAS_BGFP_OPEN_SUPPORT=n
 
 # Support HOSTAPD function
-HAS_HOSTAPD_SUPPORT=n
+HAS_HOSTAPD_SUPPORT=y
 
 #Support GreenAP function
 HAS_GREENAP_SUPPORT=n
@@ -154,7 +154,7 @@ HAS_GREENAP_SUPPORT=n
 #Support MAC80211 LINUX-only function
 #Please make sure the version for CFG80211.ko and MAC80211.ko is same as the one
 #our driver references to.
-HAS_CFG80211_SUPPORT=n
+HAS_CFG80211_SUPPORT=y
 
 #Support RFKILL hardware block/unblock LINUX-only function
 HAS_RFKILL_HW_SUPPORT=n
