@@ -1,6 +1,5 @@
 ate/*		usr/src/#DRIVER_NAME#-#VERSION#/ate/
 conf/*		usr/src/#DRIVER_NAME#-#VERSION#/conf/
-eeprom/		usr/src/#DRIVER_NAME#-#VERSION#/
 mcu/*		usr/src/#DRIVER_NAME#-#VERSION#/mcu/
 os/*		usr/src/#DRIVER_NAME#-#VERSION#/os/
 sta/*		usr/src/#DRIVER_NAME#-#VERSION#/sta/
