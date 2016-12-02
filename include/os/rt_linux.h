@@ -129,7 +129,7 @@ typedef struct usb_ctrlrequest devctrlrequest;
 
 #ifdef RTMP_MAC_USB
 #define STA_PROFILE_PATH			"/etc/Wireless/RT2870STA/RT2870STA.dat"
-#define STA_DRIVER_VERSION			DRIVER_VERSION
+#define STA_DRIVER_VERSION			DRIVER_VERSION"-"STA_DRIVER_BUILD
 #ifdef SINGLE_SKU_V2
 #define SINGLE_SKU_TABLE_FILE_NAME	"/etc/Wireless/RT2870STA/SingleSKU.dat"
 #endif /* SINGLE_SKU_V2 */
