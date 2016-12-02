@@ -710,7 +710,11 @@ static int CFG80211_OpsStaGet(
 	{
 		pSinfo->txrate.flags = RATE_INFO_FLAGS_MCS;
 		if (StaInfo.TxRateFlags & RT_CMD_80211_TXRATE_BW_40)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,0,0))
+			pSinfo->txrate.bw = RATE_INFO_BW_40;
+#else
 			pSinfo->txrate.flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
+#endif
 		/* End of if */
 		if (StaInfo.TxRateFlags & RT_CMD_80211_TXRATE_SHORT_GI)
 			pSinfo->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
@@ -723,12 +727,20 @@ static int CFG80211_OpsStaGet(
 		pSinfo->txrate.legacy = StaInfo.TxRateMCS;
 	} /* End of if */
 
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,0,0))
+	pSinfo->filled |= BIT(NL80211_STA_INFO_TX_BITRATE);
+#else
 	pSinfo->filled |= STATION_INFO_TX_BITRATE;
+#endif
 
 	/* fill signal */
 	pSinfo->signal = StaInfo.Signal;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,0,0))
+	pSinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL);
+#else
 	pSinfo->filled |= STATION_INFO_SIGNAL;
-
+#endif
 
 	return 0;
 } /* End of CFG80211_OpsStaGet */
@@ -1259,10 +1271,17 @@ static int CFG80211_OpsSurveyGet(
 
 	/* return the information to upper layer */
 	pSurvey->channel = ((CFG80211_CB *)(SurveyInfo.pCfg80211))->pCfg80211_Channels;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,0,0))
+	pSurvey->filled = SURVEY_INFO_TIME_BUSY |
+						SURVEY_INFO_TIME_EXT_BUSY;
+	pSurvey->time_busy = SurveyInfo.ChannelTimeBusy; /* unit: us */
+	pSurvey->time_ext_busy = SurveyInfo.ChannelTimeExtBusy;
+#else
 	pSurvey->filled = SURVEY_INFO_CHANNEL_TIME_BUSY |
 						SURVEY_INFO_CHANNEL_TIME_EXT_BUSY;
 	pSurvey->channel_time_busy = SurveyInfo.ChannelTimeBusy; /* unit: us */
 	pSurvey->channel_time_ext_busy = SurveyInfo.ChannelTimeExtBusy;
+#endif
 
 	CFG80211DBG(RT_DEBUG_ERROR, ("80211> busy time = %ld %ld\n",
 				(ULONG)SurveyInfo.ChannelTimeBusy,
@@ -1408,8 +1427,20 @@ static int CFG80211_OpsPmksaFlush(
 
 
 struct cfg80211_ops CFG80211_Ops = {
+	// TODO: ? https://github.com/coolshou/mt7610u/pull/1/files
+	// https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include/net/cfg80211.h?h=linux-3.5.y
+	// https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include/net/cfg80211.h?h=linux-3.6.y
+	// https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/include/net/cfg80211.h?h=linux-3.6.y&id=e8c9bd5b8d807cfe6c923265969a523b1ba1e6c2
+	// https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?h=linux-3.6.y&id=aa430da41019c1694f6a8e3b8bef1d12ed52b0ad
+	// https://sourceforge.net/p/wive-ng/wive-ng-mt/ci/6a56315baeea4f5f955c4c0753f436896d8d15db/
+	// Goto page 5 and scroll down all the way for ajax to load. search for OpsChannelSet
+	// Diffing the MediaTek-provided MT7610 and MT7612 drivers themselves provides insight into changes for kernel 3.6
+
 	/* set channel for a given wireless interface */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3,6,0))
 	.set_channel				= CFG80211_OpsChannelSet,
+#endif
+
 	/* change type/configuration of virtual interface */
 	.change_virtual_intf		= CFG80211_OpsVirtualInfChg,
 

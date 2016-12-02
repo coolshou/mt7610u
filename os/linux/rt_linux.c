@@ -2555,6 +2555,7 @@ VOID CFG80211OS_UnRegister(
 #ifdef RFKILL_HW_SUPPORT
 		wiphy_rfkill_stop_polling(pCfg80211_CB->pCfg80211_Wdev->wiphy);
 #endif /* RFKILL_HW_SUPPORT */
+
 		wiphy_unregister(pCfg80211_CB->pCfg80211_Wdev->wiphy);
 		wiphy_free(pCfg80211_CB->pCfg80211_Wdev->wiphy);
 		kfree(pCfg80211_CB->pCfg80211_Wdev);
@@ -2681,8 +2682,26 @@ BOOLEAN CFG80211_SupBandInit(
 	/* init channel */
 	for(IdLoop=0; IdLoop<NumOfChan; IdLoop++)
 	{
+		// @andy 2/24/2016
+		// 2.6.39 is the first kernel with ieee80211_channel_to_frequency requiring two parameters
+		// https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include/net/cfg80211.h?h=linux-2.6.38.y
+		// https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include/net/cfg80211.h?h=linux-2.6.39.y
+		// http://www.infty.nl/wordpress/2011/0/
+		// https://github.com/coolshou/mt7610u/pull/1/files?diff=split
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,39))
 		pChannels[IdLoop].center_freq = \
 					ieee80211_channel_to_frequency(Cfg80211_Chan[IdLoop]);
+#else
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+		pChannels[IdLoop].center_freq = \
+					ieee80211_channel_to_frequency(Cfg80211_Chan[IdLoop],
+						(IdLoop<CFG80211_NUM_OF_CHAN_2GHZ)?NL80211_BAND_2GHZ:NL80211_BAND_5GHZ);
+#else
+		pChannels[IdLoop].center_freq = \
+					ieee80211_channel_to_frequency(Cfg80211_Chan[IdLoop],
+						(IdLoop<CFG80211_NUM_OF_CHAN_2GHZ)?IEEE80211_BAND_2GHZ:IEEE80211_BAND_5GHZ);
+#endif
+#endif
 		pChannels[IdLoop].hw_value = IdLoop;
 
 		if (IdLoop < CFG80211_NUM_OF_CHAN_2GHZ)
@@ -2697,7 +2716,11 @@ BOOLEAN CFG80211_SupBandInit(
 	for(IdLoop=0; IdLoop<NumOfRate; IdLoop++)
 		memcpy(&pRates[IdLoop], &Cfg80211_SupRate[IdLoop], sizeof(*pRates));
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+	pBand = &pCfg80211_CB->Cfg80211_bands[NL80211_BAND_2GHZ];
+#else
 	pBand = &pCfg80211_CB->Cfg80211_bands[IEEE80211_BAND_2GHZ];
+#endif
 	if (pBandInfo->RFICType & RFIC_24GHZ)
 	{
 		pBand->n_channels = CFG80211_NUM_OF_CHAN_2GHZ;
@@ -2741,16 +2764,28 @@ BOOLEAN CFG80211_SupBandInit(
 		pBand->ht_cap.mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED;
 #endif /* DOT11_N_SUPPORT */
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+		pWiphy->bands[NL80211_BAND_2GHZ] = pBand;
+#else
 		pWiphy->bands[IEEE80211_BAND_2GHZ] = pBand;
+#endif
 	}
 	else
 	{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+		pWiphy->bands[NL80211_BAND_2GHZ] = NULL;
+#else
 		pWiphy->bands[IEEE80211_BAND_2GHZ] = NULL;
+#endif
 		pBand->channels = NULL;
 		pBand->bitrates = NULL;
 	}
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+	pBand = &pCfg80211_CB->Cfg80211_bands[NL80211_BAND_5GHZ];
+#else
 	pBand = &pCfg80211_CB->Cfg80211_bands[IEEE80211_BAND_5GHZ];
+#endif
 	if (pBandInfo->RFICType & RFIC_5GHZ)
 	{
 		pBand->n_channels = CFG80211_NUM_OF_CHAN_5GHZ;
@@ -2792,11 +2827,19 @@ BOOLEAN CFG80211_SupBandInit(
 		pBand->ht_cap.mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED;
 #endif /* DOT11_N_SUPPORT */
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+		pWiphy->bands[NL80211_BAND_5GHZ] = pBand;
+#else
 		pWiphy->bands[IEEE80211_BAND_5GHZ] = pBand;
+#endif
 	}
 	else
 	{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+		pWiphy->bands[NL80211_BAND_5GHZ] = NULL;
+#else
 		pWiphy->bands[IEEE80211_BAND_5GHZ] = NULL;
+#endif
 		pBand->channels = NULL;
 		pBand->bitrates = NULL;
 	}
@@ -2971,8 +3014,13 @@ BOOLEAN CFG80211OS_BandInfoGet(
 	if (pWiphy == NULL)
 		return FALSE;
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+	*ppBand24 = pWiphy->bands[NL80211_BAND_2GHZ];
+	*ppBand5 = pWiphy->bands[NL80211_BAND_5GHZ];
+#else
 	*ppBand24 = pWiphy->bands[IEEE80211_BAND_2GHZ];
 	*ppBand5 = pWiphy->bands[IEEE80211_BAND_5GHZ];
+#endif
 	return TRUE;
 }
 
@@ -3083,11 +3131,23 @@ BOOLEAN CFG80211OS_ChanInfoInit(
 	memset(pChan, 0, sizeof(*pChan));
 
 	if (ChanId > 14)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+		pChan->band = NL80211_BAND_5GHZ;
+#else
 		pChan->band = IEEE80211_BAND_5GHZ;
+#endif
 	else
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+		pChan->band = NL80211_BAND_2GHZ;
+#else
 		pChan->band = IEEE80211_BAND_2GHZ;
+#endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,39))
 	pChan->center_freq = ieee80211_channel_to_frequency(ChanId);
+#else
+	pChan->center_freq = ieee80211_channel_to_frequency(ChanId, pChan->band);
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 	if (FlgIsNMode == TRUE)
@@ -3139,9 +3199,17 @@ VOID CFG80211OS_Scaning(
 	UINT32 IdChan;
 	UINT32 CenFreq;
 
-
 	/* get channel information */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,39))
 	CenFreq = ieee80211_channel_to_frequency(ChanId);
+#else
+	CenFreq = ieee80211_channel_to_frequency(ChanId,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+		(ChanId<CFG80211_NUM_OF_CHAN_2GHZ)?NL80211_BAND_2GHZ:NL80211_BAND_5GHZ);
+#else
+		(ChanId<CFG80211_NUM_OF_CHAN_2GHZ)?IEEE80211_BAND_2GHZ:IEEE80211_BAND_5GHZ);
+#endif
+#endif
 
 	for(IdChan=0; IdChan<MAX_NUM_OF_CHANNELS; IdChan++)
 	{
