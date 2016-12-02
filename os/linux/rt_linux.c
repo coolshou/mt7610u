@@ -173,7 +173,7 @@ VOID RTMPusecDelay(ULONG usec)
 /* Unify all delay routine by using udelay */
 VOID RtmpOsUsDelay(ULONG value)
 {
-	ULONG i;
+//	ULONG i;
 
 	udelay(value);
 }
