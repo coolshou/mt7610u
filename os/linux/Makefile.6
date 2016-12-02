@@ -92,11 +92,7 @@ endif
 
 #ifdef CONFIG_STA_SUPPORT
 ifeq ($(RT28xx_MODE), STA)
-ifneq ($(KERNELRELEASE),)
-MOD_NAME = $(MODULE)
-else
 MOD_NAME = $(MODULE)_sta
-endif
 ifeq ($(PLATFORM),MT85XX)
 MOD_NAME = rtsta
 endif
