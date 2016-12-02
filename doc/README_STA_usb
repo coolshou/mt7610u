@@ -243,8 +243,12 @@ syntax is 'Param'='Value' and describes below.
 		7: 11GN mixed
 		8: 11AN mixed
 		9: 11BGN mixed
-	   10: 11AGN mixed	
-                     
+		10: 11AGN mixed	
+		12: /* 12 -> AC/A/AN/B/G/GN mixed */
+		13: /* 13 -> AC/A/AN/G/GN mixed  */
+		14: /* 14 -> AC/AN/A mixed in 5G band */
+		15: /* 15 -> AC/AN mixed in 5G band */
+	         
 @> Channel=value
 	value
 		depends on CountryRegion or CountryRegionABand
