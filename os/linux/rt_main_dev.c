@@ -62,7 +62,7 @@ MODULE_PARM (mac, "s");
 #else
 module_param (mac, charp, 0);
 #endif
-MODULE_PARM_DESC (mac, "rt28xx: wireless mac addr");
+MODULE_PARM_DESC (mac, "wireless mac addr");
 
 #ifdef OS_ABL_SUPPORT
 RTMP_DRV_ABL_OPS RtmpDrvOps, *pRtmpDrvOps = &RtmpDrvOps;
@@ -733,9 +733,6 @@ BOOLEAN RtmpPhyNetDevExit(
 	IN VOID			*pAd, 
 	IN PNET_DEV		net_dev)
 {
-
-
-
 
 #ifdef INF_PPA_SUPPORT
 
