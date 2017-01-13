@@ -41,7 +41,8 @@ USB_DEVICE_ID rtusb_dev_id[] = {
 	{USB_DEVICE(0x13B1,0x003E)}, /* Cisco Linksys AE6000 */
    	{USB_DEVICE(0x7392,0xA711)}, /* Edimax 7711ULC/7711MAC */
    	{USB_DEVICE(0x7392,0xB711)}, /* Elecom WDC-433SU2M */
-   	{USB_DEVICE(0x7392,0xC711)}, /* Devolo Wifi Stick ac */
+   	{USB_DEVICE(0x7392,0xC711)}, /* Devolo Wifi Stick ac (5G only)*/
+   	{USB_DEVICE(0x0bdb,0x1011)}, /* Sitecom Europe B.V. ac Stick (5G only)*/
 	{USB_DEVICE(0x148F,0x761A)}, /* TP-LINK Archer T2UH */
 	{USB_DEVICE(0x2357,0x0105)}, /* TP-LINK Archer T1U */
 	{USB_DEVICE(0x148F,0x760A)}, /* TP-LINK */
