@@ -6692,7 +6692,7 @@ RtmpIoctl_rt_ioctl_siwauth(
                 pAd->StaCfg.IEEE8021X = FALSE;
 #endif /* WPA_SUPPLICANT_SUPPORT */
             }
-            else if (pIoctlWpa->value == RT_CMD_STA_IOCTL_WPA_PAIRWISE_TKIP)
+/*            else if (pIoctlWpa->value == RT_CMD_STA_IOCTL_WPA_PAIRWISE_TKIP)
             {
                 pAd->StaCfg.WepStatus = Ndis802_11Encryption2Enabled;
                 pAd->StaCfg.PairCipher = Ndis802_11Encryption2Enabled;
@@ -6701,6 +6701,16 @@ RtmpIoctl_rt_ioctl_siwauth(
             {
                 pAd->StaCfg.WepStatus = Ndis802_11Encryption3Enabled;
                 pAd->StaCfg.PairCipher = Ndis802_11Encryption3Enabled;
+            }*/
+            else if (pIoctlWpa->value == RT_CMD_STA_IOCTL_WPA_PAIRWISE_TKIP)
+            {
+                pAd->StaCfg.WepStatus = Ndis802_11TKIPEnable;
+                pAd->StaCfg.PairCipher = Ndis802_11TKIPEnable;
+            }
+            else if (pIoctlWpa->value == RT_CMD_STA_IOCTL_WPA_PAIRWISE_CCMP)
+            {
+                pAd->StaCfg.WepStatus = Ndis802_11AESEnable;
+                pAd->StaCfg.PairCipher = Ndis802_11AESEnable;
             }
             DBGPRINT(RT_DEBUG_TRACE, ("%s::IW_AUTH_CIPHER_PAIRWISE - param->value = %d!\n", __FUNCTION__, pIoctlWpa->value));
             break;
@@ -6713,17 +6723,19 @@ RtmpIoctl_rt_ioctl_siwauth(
             {
                 pAd->StaCfg.GroupCipher = Ndis802_11GroupWEP40Enabled;
             }
-			else if (pIoctlWpa->value == RT_CMD_STA_IOCTL_WPA_GROUP_WEP104)
+            else if (pIoctlWpa->value == RT_CMD_STA_IOCTL_WPA_GROUP_WEP104)
             {
-				pAd->StaCfg.GroupCipher = Ndis802_11GroupWEP104Enabled;
+                pAd->StaCfg.GroupCipher = Ndis802_11GroupWEP104Enabled;
             }
             else if (pIoctlWpa->value == RT_CMD_STA_IOCTL_WPA_GROUP_TKIP)
             {
-                pAd->StaCfg.GroupCipher = Ndis802_11Encryption2Enabled;
+//                pAd->StaCfg.GroupCipher = Ndis802_11Encryption2Enabled;
+                pAd->StaCfg.GroupCipher = Ndis802_11TKIPEnable;
             }
             else if (pIoctlWpa->value == RT_CMD_STA_IOCTL_WPA_GROUP_CCMP)
             {
-                pAd->StaCfg.GroupCipher = Ndis802_11Encryption3Enabled;
+//                pAd->StaCfg.GroupCipher = Ndis802_11Encryption3Enabled;
+                pAd->StaCfg.GroupCipher = Ndis802_11AESEnable;
             }
             DBGPRINT(RT_DEBUG_TRACE, ("%s::IW_AUTH_CIPHER_GROUP - param->value = %d!\n", __FUNCTION__, pIoctlWpa->value));
             break;
