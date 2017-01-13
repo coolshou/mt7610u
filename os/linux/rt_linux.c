@@ -2029,7 +2029,7 @@ VOID RtmpDrvAllRFPrint(
 		if (file_w->f_op && file_w->f_op->write) {
 			file_w->f_pos = 0;
 			/* write data to file */
-			file_w->f_op->write(file_w, pBuf, BufLen, &file_w->f_pos);
+			file_w->f_op->write(file_w, (const char *) pBuf, BufLen, &file_w->f_pos);
 		}
 		filp_close(file_w, NULL);
 	}
