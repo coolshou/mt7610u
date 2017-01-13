@@ -478,7 +478,7 @@ VOID MlmeAssocReqAction(
 				QosInfo.MaxSPLength = pAd->CommonCfg.MaxSPLength;
 				WmeIe[8] |= *(PUCHAR) & QosInfo;
 			} else {
-				/* The Parameter Set Count is set to ¡§0¡¨ in the association request frames */
+				/* The Parameter Set Count is set to \A1\A70\A1\A8 in the association request frames */
 				/* WmeIe[8] |= (pAd->MlmeAux.APEdcaParm.EdcaUpdateCount & 0x0f); */
 			}
 
