@@ -666,6 +666,24 @@ static void rtmp_read_key_parms_from_file(IN  PRTMP_ADAPTER pAd, PSTRING tmpbuf,
 }
 
 
+static void rtmp_key_set_default_parms(IN  PRTMP_ADAPTER pAd)
+{
+	ULONG		KeyIdx;
+
+#ifdef CONFIG_STA_SUPPORT
+	// DefaultKeyID=1
+	IF_DEV_CONFIG_OPMODE_ON_STA(pAd)
+	{
+		KeyIdx = 1;
+		RTMPSetSTADefKeyId(pAd, KeyIdx);
+		DBGPRINT(RT_DEBUG_TRACE, ("Default DefaultKeyID(0~3)=%d\n", pAd->StaCfg.DefaultKeyId));
+	}
+#endif /* CONFIG_STA_SUPPORT */
+
+	// Unnecessary to set KeyType[] or KeyStr[]... its default is Key{1,4}{Type,Str} is Invalid key length(0) or Type(0), which does nothing
+}
+
+
 
 #ifdef CONFIG_STA_SUPPORT
 static void rtmp_read_sta_wmm_parms_from_file(IN  PRTMP_ADAPTER pAd, char *tmpbuf, char *buffer)
@@ -766,6 +784,58 @@ static void rtmp_read_sta_wmm_parms_from_file(IN  PRTMP_ADAPTER pAd, char *tmpbu
 #endif /* UAPSD_SUPPORT */
 }
 
+static void rtmp_sta_wmm_set_default_parms(IN  PRTMP_ADAPTER pAd)
+{				
+	INT i=0;
+	
+	// WmmCapable=0
+	pAd->CommonCfg.bWmmCapable = FALSE;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default WmmCapable=%d\n", pAd->CommonCfg.bWmmCapable));
+
+#ifdef QOS_DLS_SUPPORT
+	/*DLSCapable*/
+	// Not set in config file: not setting here either
+#endif /* QOS_DLS_SUPPORT */
+
+	// AckPolicy=0;0;0;0
+	/*AckPolicy for AC_BK, AC_BE, AC_VI, AC_VO*/
+	for (i = 0; i < 4; i++)
+	{
+		pAd->CommonCfg.AckPolicy[i] = (UCHAR)0;
+		DBGPRINT(RT_DEBUG_TRACE, ("Default AckPolicy[%d]=%d\n", i, pAd->CommonCfg.AckPolicy[i]));
+	}
+
+#ifdef UAPSD_SUPPORT
+	if (bWmmEnable)
+	{
+		// APSDCapable=0
+		pAd->StaCfg.UapsdInfo.bAPSDCapable = FALSE;
+		DBGPRINT(RT_DEBUG_TRACE, ("Default APSDCapable=%d\n", pAd->StaCfg.UapsdInfo.bAPSDCapable));
+
+		/*MaxSPLength*/
+		// Not set in config file: not setting here either
+
+		// APSDAC=0;0;0;0
+		/*APSDAC for AC_BE, AC_BK, AC_VI, AC_VO*/
+		for (i = 0; i < 4; i++)
+		{
+			apsd_ac[i] = FALSE;
+			DBGPRINT(RT_DEBUG_TRACE, ("Default APSDAC[%d]=%d\n", i, apsd_ac[i]));
+		}
+				
+		pAd->CommonCfg.bAPSDAC_BE = apsd_ac[0];
+		pAd->CommonCfg.bAPSDAC_BK = apsd_ac[1];
+		pAd->CommonCfg.bAPSDAC_VI = apsd_ac[2];
+		pAd->CommonCfg.bAPSDAC_VO = apsd_ac[3];
+
+		pAd->CommonCfg.bACMAPSDTr[0] = apsd_ac[0];
+		pAd->CommonCfg.bACMAPSDTr[1] = apsd_ac[1];
+		pAd->CommonCfg.bACMAPSDTr[2] = apsd_ac[2];
+		pAd->CommonCfg.bACMAPSDTr[3] = apsd_ac[3];
+	}
+#endif /* UAPSD_SUPPORT */
+}
+
 #ifdef XLINK_SUPPORT
 static void rtmp_get_psp_xlink_mode_from_file(IN  PRTMP_ADAPTER pAd, char *tmpbuf, char *buffer)
 {
@@ -792,6 +862,23 @@ static void rtmp_get_psp_xlink_mode_from_file(IN  PRTMP_ADAPTER pAd, char *tmpbu
 
 		DBGPRINT(RT_DEBUG_TRACE, ("PSP_XLINK_MODE=%d\n", pAd->StaCfg.PSPXlink));
 	}
+}
+
+static void rtmp_psp_xlink_mode_set_default_parms(IN  PRTMP_ADAPTER pAd)
+{
+	UINT32 Value = 0;
+
+	// PSP_XLINK_MODE=0
+	pAd->StaCfg.PSPXlink = FALSE;
+
+	if (pAd->StaCfg.PSPXlink)
+		Value = PSPXLINK;
+	else
+		Value = STANORMAL;
+
+	RTMP_IO_WRITE32(pAd, RX_FILTR_CFG, Value);
+
+	DBGPRINT(RT_DEBUG_TRACE, ("Default PSP_XLINK_MODE=%d\n", pAd->StaCfg.PSPXlink));
 }
 #endif /* XLINK_SUPPORT */
 #endif /* CONFIG_STA_SUPPORT */
@@ -854,6 +941,29 @@ static void VHTParametersHook(
 			pAd->CommonCfg.vht_bw_signal = 0;
 		DBGPRINT(RT_DEBUG_TRACE, ("VHT: BW SIGNALING = %d\n", pAd->CommonCfg.vht_bw_signal));
 	}	
+}
+
+static void VHTParametersHookDefaultValues(
+	IN RTMP_ADAPTER *pAd)
+{
+	// This function should follow a similar layout to VHTParametersHook
+
+	// VHT_BW=1 (Channel Width: 0: 20/40, 1: 80, 2: 160, 3: 80/80?)
+	pAd->CommonCfg.vht_bw = VHT_BW_80;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default VHT: Channel Width = %s\n",
+		(pAd->CommonCfg.vht_bw == VHT_BW_80) ? "80 MHz" : "20/40 MHz" ));
+
+	// VHT_SGI=1 (GI_400)
+	pAd->CommonCfg.vht_sgi_80 = GI_400;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default VHT: Short GI for 80Mhz  = %s\n",
+				(pAd->CommonCfg.vht_sgi_80==GI_800) ? "Disabled" : "Enable" ));
+
+	// VHT_STBC=0 (STBC_NONE)
+	pAd->CommonCfg.vht_stbc = STBC_NONE;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default VHT: STBC = %d\n",
+				pAd->CommonCfg.vht_stbc));
+
+	// VHT_BW_SIGNAL (bandwidth signaling) (missing)
 }
 
 #endif /* DOT11_VHT_AC */
@@ -1349,6 +1459,157 @@ static void HTParametersHook(
 		pAd->CommonCfg.bRalinkBurstMode = ((Value == 1) ? 1 : 0);
 		DBGPRINT(RT_DEBUG_TRACE, ("HT: RaBurstMode= %d\n", pAd->CommonCfg.bRalinkBurstMode));
 	}
+#endif /* DOT11_N_SUPPORT */
+
+}
+
+static void HTParametersHookDefaultValues(
+	IN	PRTMP_ADAPTER pAd)
+{
+	long Value;
+
+	// This function should follow a similar layout to HTParametersHook
+
+	// HT_PROTECT (missing)
+
+	// HT_MIMOPSMode=3
+        Value = 3;
+        if (Value > MMPS_ENABLE)
+        {
+		pAd->CommonCfg.BACapability.field.MMPSmode = MMPS_ENABLE;
+        }
+        else
+        {
+		/*TODO: add mimo power saving mechanism*/
+		pAd->CommonCfg.BACapability.field.MMPSmode = MMPS_ENABLE;
+		/*pAd->CommonCfg.BACapability.field.MMPSmode = Value;*/
+        }
+        DBGPRINT(RT_DEBUG_TRACE, ("Default HT: MIMOPS Mode  = %d\n", (INT) pAd->CommonCfg.BACapability.field.MMPSmode));
+
+	// HT_BADecline=0
+	pAd->CommonCfg.bBADecline = FALSE;
+        DBGPRINT(RT_DEBUG_TRACE, ("Default HT: BA Decline  = %s\n", (pAd->CommonCfg.bBADecline==0) ? "Disable" : "Enable"));
+
+	// HT_AutoBA=1
+        Value = 1;
+        if (Value == 0)
+        {
+		pAd->CommonCfg.BACapability.field.AutoBA = FALSE;
+		pAd->CommonCfg.BACapability.field.Policy = BA_NOTUSE;
+        }
+        else
+        {
+		pAd->CommonCfg.BACapability.field.AutoBA = TRUE;
+		pAd->CommonCfg.BACapability.field.Policy = IMMED_BA;
+        }
+	pAd->CommonCfg.REGBACapability.field.AutoBA = pAd->CommonCfg.BACapability.field.AutoBA;
+	pAd->CommonCfg.REGBACapability.field.Policy = pAd->CommonCfg.BACapability.field.Policy;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: Auto BA  = %s\n", (Value==0) ? "Disable" : "Enable"));
+
+	// HT_HTC (missing)
+
+	// HT_RDG=1 (Reverse Direction Mechanism)
+	Value = 1;
+	if (Value == 0)
+	{			
+		pAd->CommonCfg.bRdg = FALSE;
+	}
+	else
+	{
+		pAd->HTCEnable = TRUE;
+		pAd->CommonCfg.bRdg = TRUE;
+	}
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: RDG = %s\n", (Value==0) ? "Disable" : "Enable(+HTC)"));
+
+	// HT_AMSDU=0 (Tx A-MSDU ?)
+	pAd->CommonCfg.BACapability.field.AmsduEnable = FALSE;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: Tx A-MSDU = %s\n", (pAd->CommonCfg.BACapability.field.AmsduEnable==0) ? "Disable" : "Enable"));
+
+	// HT_MpduDensity=4
+	pAd->CommonCfg.BACapability.field.MpduDensity = 4;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: MPDU Density = %d\n", pAd->CommonCfg.BACapability.field.MpduDensity));
+
+	// HT_BAWinSize=64 (Max Rx BA Window Size)
+	pAd->CommonCfg.REGBACapability.field.RxBAWinLimit = 64;
+	pAd->CommonCfg.BACapability.field.RxBAWinLimit = 64;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: BA Window Size = %d\n", (INT) pAd->CommonCfg.REGBACapability.field.RxBAWinLimit));
+
+	// HT_GI=1 (Guard Interval)
+	Value = GI_400; // 1
+	if (Value == GI_400)
+	{
+		pAd->CommonCfg.RegTransmitSetting.field.ShortGI = GI_400;
+	}
+	else
+	{
+		pAd->CommonCfg.RegTransmitSetting.field.ShortGI = GI_800;
+	}	
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: Guard Interval = %s\n", (Value==GI_400) ? "400" : "800" ));
+
+	// HT_OpMode=0 (HighThroughput Operation Mode: Mixed Mode, Greenfield)
+	pAd->CommonCfg.RegTransmitSetting.field.HTMODE = HTMODE_MM; // 0: Mixed Mode
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: Operation Mode = %s\n", (pAd->CommonCfg.RegTransmitSetting.field.HTMODE==HTMODE_GF) ? "Greenfield" : "Mixed Mode" ));
+
+	// FixedTxMode (missing)
+
+	// HT_BW=1 (Channel Width: 0: 20 MHz, 1: 40 MHz)
+	pAd->CommonCfg.RegTransmitSetting.field.BW = BW_40;
+
+#ifdef MCAST_RATE_SPECIFIC
+	pAd->CommonCfg.MCastPhyMode.field.BW = pAd->CommonCfg.RegTransmitSetting.field.BW;
+#endif /* MCAST_RATE_SPECIFIC */
+
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: Channel Width = %s\n", (pAd->CommonCfg.RegTransmitSetting.field.BW==BW_40) ? "40 MHz" : "20 MHz" ));
+
+	// HT_EXTCHA=0 (External Channel during 40 MHz operation)
+	pAd->CommonCfg.RegTransmitSetting.field.EXTCHA = EXTCHA_BELOW;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: Ext Channel = %s\n", (pAd->CommonCfg.RegTransmitSetting.field.EXTCHA==0) ? "BELOW" : "ABOVE" ));
+
+#ifdef CONFIG_STA_SUPPORT 
+	// HT_MCS=33	
+	IF_DEV_CONFIG_OPMODE_ON_STA(pAd)
+	{
+		Value = 33;
+		if ((Value >= 0 && Value <= 23) || (Value == 32))
+		{
+			pAd->StaCfg.DesiredTransmitSetting.field.MCS  = Value;
+			pAd->StaCfg.bAutoTxRateSwitch = FALSE;
+			DBGPRINT(RT_DEBUG_TRACE, ("Default HT: MCS = %d\n", pAd->StaCfg.DesiredTransmitSetting.field.MCS));
+		}
+		else
+		{
+			pAd->StaCfg.DesiredTransmitSetting.field.MCS  = MCS_AUTO;
+			pAd->StaCfg.bAutoTxRateSwitch = TRUE;
+			DBGPRINT(RT_DEBUG_TRACE, ("Default HT: MCS = AUTO\n"));
+		}
+	}
+#endif /* CONFIG_STA_SUPPORT */	
+
+	// HT_STBC=0 (STBC_NONE)
+	pAd->CommonCfg.RegTransmitSetting.field.STBC = STBC_NONE;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: STBC = %d\n", pAd->CommonCfg.RegTransmitSetting.field.STBC));
+
+	// HT_40MHZ_INTOLERANT (missing)
+
+	// HT_TxStream (missing)
+
+	// HT_RxStream (missing)
+
+	// HT_DisallowTKIP=1
+	pAd->CommonCfg.HT_DisallowTKIP = TRUE;
+	DBGPRINT(RT_DEBUG_TRACE, ("Default HT: Disallow TKIP mode = %s\n", (pAd->CommonCfg.HT_DisallowTKIP == TRUE) ? "ON" : "OFF" ));
+
+#ifdef DOT11_N_SUPPORT
+#ifdef DOT11N_DRAFT3
+	// OBSSScanParam (missing)
+
+	// HT_BSSCoexistence (missing)
+
+	// HT_BSSCoexApCntThr (missing)
+
+#endif /* DOT11N_DRAFT3 */
+
+	// BurstMode (missing)
 #endif /* DOT11_N_SUPPORT */
 
 }
