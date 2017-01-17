@@ -27,7 +27,7 @@
 
 #define RTMP_MODULE_OS
 
-/*#include "rt_config.h" */
+#include "rt_config.h" // for PRTMP_ADAPTER
 #include "rtmp_comm.h"
 #include "rt_os_util.h"
 #include "rt_os_net.h"
@@ -749,8 +749,21 @@ BOOLEAN RtmpPhyNetDevExit(
 	/* Unregister network device */
 	if (net_dev != NULL)
 	{
-		printk("RtmpOSNetDevDetach(): RtmpOSNetDeviceDetach(), dev->name=%s!\n", net_dev->name);
-		RtmpOSNetDevDetach(net_dev);
+#ifdef RT_CFG80211_SUPPORT
+
+		// If scan is running, abort it. Prevents WARN_ON net/wireless/core.c:846
+		// Also, we need to prevent new scans from starting after this point (they do). 
+		if (((PRTMP_ADAPTER)pAd)->FlgCfg80211Scanning == TRUE)
+		{
+			DBGPRINT(RT_DEBUG_TRACE, ("RtmpPhyNetDevExit(): RT_CFG80211_SCAN_END, dev->name=%s!\n", net_dev->name));
+			RT_CFG80211_SCAN_END(pAd, TRUE);
+		}
+#endif
+
+		// FIXED: call MainVirtualIF_close() when disconnecting. otherwise, enjoy 35G of logs and rmmod freeze
+		DBGPRINT(RT_DEBUG_TRACE, ("RtmpPhyNetDevExit(): MainVirtualIF_close(), dev->name=%s!\n", net_dev->name));
+		// This also shuts down operations like scan/etc and stops IOCTLs from going to the adapter
+		MainVirtualIF_close(net_dev);
 	}
 
 	return TRUE;
