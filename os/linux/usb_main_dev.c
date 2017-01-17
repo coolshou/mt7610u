@@ -390,7 +390,7 @@ static int rt2870_suspend(
 	struct usb_interface *intf,
 	pm_message_t state)
 {
-	struct net_device *net_dev;
+//	struct net_device *net_dev;
 	VOID *pAd = usb_get_intfdata(intf);
 	
 	DBGPRINT(RT_DEBUG_TRACE, ("===> rt2870_suspend()\n"));
@@ -438,7 +438,7 @@ static int rt2870_suspend(
 static int rt2870_resume(
 	struct usb_interface *intf)
 {
-	struct net_device *net_dev;
+//	struct net_device *net_dev;
 	VOID *pAd = usb_get_intfdata(intf);
 
 #ifdef USB_SUPPORT_SELECTIVE_SUSPEND
