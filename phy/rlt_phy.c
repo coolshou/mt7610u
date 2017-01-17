@@ -65,9 +65,8 @@ NDIS_STATUS NICInitBBP(RTMP_ADAPTER *pAd)
 
 INT rtmp_bbp_get_temp(struct _RTMP_ADAPTER *pAd, CHAR *temp_val)
 {
-	UINT32 bbp_val;	
-
 #if defined(RTMP_INTERNAL_TX_ALC) || defined(RTMP_TEMPERATURE_COMPENSATION) 
+	UINT32 bbp_val;	
 	RTMP_BBP_IO_READ32(pAd, CORE_R35, &bbp_val);
 	*temp_val = (CHAR)(bbp_val & 0xff);
 
@@ -79,10 +78,10 @@ INT rtmp_bbp_get_temp(struct _RTMP_ADAPTER *pAd, CHAR *temp_val)
 
 INT 	rtmp_bbp_tx_comp_init(RTMP_ADAPTER *pAd, INT adc_insel, INT tssi_mode)
 {
+#if defined(RTMP_INTERNAL_TX_ALC) || defined(RTMP_TEMPERATURE_COMPENSATION) 
 	UINT32 bbp_val;
 	UCHAR rf_val;
 
-#if defined(RTMP_INTERNAL_TX_ALC) || defined(RTMP_TEMPERATURE_COMPENSATION) 
 	RTMP_BBP_IO_READ32(pAd, CORE_R34, &bbp_val);
 	bbp_val = (bbp_val & 0xe7);
 	bbp_val = (bbp_val | 0x80);
