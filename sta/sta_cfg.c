@@ -825,6 +825,85 @@ INT Set_DefaultKeyID_Proc(
     return TRUE;
 }
 
+
+INT Set_Wep_Key_Proc(
+    IN  PRTMP_ADAPTER   pAdapter,
+    IN  PSTRING         Key,
+    IN  INT             KeyLen,
+    IN  INT             KeyId)
+{
+    int    i;
+    UCHAR  CipherAlg = CIPHER_WEP64;
+	struct wifi_dev *wdev = &pAdapter->StaCfg.wdev;
+	
+    if (wdev->AuthMode >= Ndis802_11AuthModeWPA)
+        return TRUE;    /* do nothing */
+
+    if ((KeyId < 0) || (KeyId > 3))	
+    {
+		DBGPRINT(RT_DEBUG_TRACE, ("Set_Wep_Key_Proc::Invalid KeyId (=%d)\n", KeyId));
+		return FALSE;
+    }	
+
+    switch (KeyLen)
+    {
+        case 5: /* wep 40 Ascii type */
+            pAdapter->SharedKey[BSS0][KeyId].KeyLen = KeyLen;
+            memcpy(pAdapter->SharedKey[BSS0][KeyId].Key, Key, KeyLen);
+            CipherAlg = CIPHER_WEP64;
+            break;
+
+        case 10: /* wep 40 Hex type */
+            for(i=0; i < KeyLen; i++)
+            {
+                if( !isxdigit(*(Key+i)) )
+                    return FALSE;  /*Not Hex value; */
+            }
+            pAdapter->SharedKey[BSS0][KeyId].KeyLen = KeyLen / 2 ;
+            AtoH(Key, pAdapter->SharedKey[BSS0][KeyId].Key, KeyLen / 2);
+            CipherAlg = CIPHER_WEP64;
+            break;
+
+        case 13: /* wep 104 Ascii type */
+            pAdapter->SharedKey[BSS0][KeyId].KeyLen = KeyLen;
+            memcpy(pAdapter->SharedKey[BSS0][KeyId].Key, Key, KeyLen);
+            CipherAlg = CIPHER_WEP128;
+            break;
+
+        case 26: /* wep 104 Hex type */
+            for(i=0; i < KeyLen; i++)
+            {
+                if( !isxdigit(*(Key+i)) )
+                    return FALSE;  /*Not Hex value; */
+            }
+            pAdapter->SharedKey[BSS0][KeyId].KeyLen = KeyLen / 2 ;
+            AtoH(Key, pAdapter->SharedKey[BSS0][KeyId].Key, KeyLen / 2);
+            CipherAlg = CIPHER_WEP128;
+            break;
+			
+        default: /* Invalid argument */
+            DBGPRINT(RT_DEBUG_ERROR, ("Set_Wep_Key_Proc::Invalid argument (=%s)\n", Key));
+            return FALSE;
+    }
+
+    pAdapter->SharedKey[BSS0][KeyId].CipherAlg = CipherAlg;
+
+    /* Set keys (into ASIC) */
+    if (wdev->AuthMode >= Ndis802_11AuthModeWPA)
+        ;   /* not support */
+    else    /* Old WEP stuff */
+    {
+        AsicAddSharedKeyEntry(pAdapter,
+                              0,
+                              0,
+                              &pAdapter->SharedKey[BSS0][KeyId]);
+    }
+
+    return TRUE;
+}
+
+
+
 /* 
     ==========================================================================
     Description:
