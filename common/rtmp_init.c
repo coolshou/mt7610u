@@ -1058,7 +1058,7 @@ VOID	NICInitAsicFromEEPROM(
 #ifdef CONFIG_STA_SUPPORT
 	UINT32 data = 0;
 #endif /* CONFIG_STA_SUPPORT */
-	USHORT i;
+
 #ifdef RALINK_ATE
 	USHORT value;
 #endif /* RALINK_ATE */
@@ -1067,6 +1067,7 @@ VOID	NICInitAsicFromEEPROM(
 	DBGPRINT(RT_DEBUG_TRACE, ("--> NICInitAsicFromEEPROM\n"));
 
 #ifndef RT65xx
+	USHORT i;
 	for(i = EEPROM_BBP_ARRAY_OFFSET; i < NUM_EEPROM_BBP_PARMS; i++)
 	{
 		UCHAR BbpRegIdx, BbpValue;
