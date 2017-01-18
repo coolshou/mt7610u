@@ -14,10 +14,7 @@ include/*		usr/src/#DRIVER_NAME#-#VERSION#/include/
 naf/*		usr/src/#DRIVER_NAME#-#VERSION#/naf/
 rate_ctrl/*		usr/src/#DRIVER_NAME#-#VERSION#/rate_ctrl/
 tools/*		usr/src/#DRIVER_NAME#-#VERSION#/tools/
-iwpriv_usage.txt		usr/src/#DRIVER_NAME#-#VERSION#/
-README_STA_usb		usr/src/#DRIVER_NAME#-#VERSION#/
 RT2870STA.dat		usr/src/#DRIVER_NAME#-#VERSION#/
 RT2870STACard.dat  		usr/src/#DRIVER_NAME#-#VERSION#/
-sta_ate_iwpriv_usage.txt		usr/src/#DRIVER_NAME#-#VERSION#/
 Makefile		usr/src/#DRIVER_NAME#-#VERSION#/
 debian/dkms.conf	usr/src/#DRIVER_NAME#-#VERSION#/
