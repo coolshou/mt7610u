@@ -1,5 +1,5 @@
 Source: mt7610u
-Section: unknown
+Section: kernel
 Priority: optional
 Maintainer: jimmy <jimmy@jimmy-alpha>
 Build-Depends: debhelper (>=9), dh-python, dh-modaliases, gcc-4.9 | gcc-5 | gcc (>= 5.3.1)
