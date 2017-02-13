@@ -1,4 +1,4 @@
-mt7610u (3.0.0.2-20130916~1) unstable; urgency=medium
+mt7610u (#VERSION#-#DRIVER_BUILD_VERSION#) unstable; urgency=medium
 
   * Initial release
 
