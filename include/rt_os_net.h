@@ -30,8 +30,8 @@
 
 #include "chip/chip_id.h"
 
-typedef VOID *(*RTMP_NET_ETH_CONVERT_DEV_SEARCH)(VOID *net_dev, UCHAR *pData);
-typedef int (*RTMP_NET_PACKET_TRANSMIT)(VOID *pPacket);
+typedef void *(*RTMP_NET_ETH_CONVERT_DEV_SEARCH)(void *net_dev, UCHAR *pData);
+typedef int (*RTMP_NET_PACKET_TRANSMIT)(void *pPacket);
 
 #ifdef LINUX
 #ifdef OS_ABL_FUNC_SUPPORT
@@ -41,25 +41,20 @@ typedef int (*RTMP_NET_PACKET_TRANSMIT)(VOID *pPacket);
 /* Note: No need to put any compile option here */
 typedef struct _RTMP_DRV_ABL_OPS {
 
-NDIS_STATUS	(*RTMPAllocAdapterBlock)(PVOID handle, VOID **ppAdapter);
-VOID (*RTMPFreeAdapter)(VOID *pAd);
-BOOLEAN (*RtmpRaDevCtrlExit)(VOID *pAd);
-INT (*RtmpRaDevCtrlInit)(VOID *pAd, RTMP_INF_TYPE infType);
-VOID (*RTMPHandleInterrupt)(VOID *pAd);
-INT (*RTMP_COM_IoctlHandle)(
-	IN	VOID *pAd, 
-	IN	RTMP_IOCTL_INPUT_STRUCT *wrq,
-	IN	INT cmd,
-	IN	USHORT subcmd,
-	IN	VOID *pData,
-	IN	ULONG Data);
+NDIS_STATUS RTMPAllocAdapterBlock(PVOID handle, void **ppAdapter);
+void RTMPFreeAdapter(void *pAd);
+BOOLEAN RtmpRaDevCtrlExit(void *pAd);
+BOOLEAN RtmpRaDevCtrlInit(void *pAd, RTMP_INF_TYPE infType);
+void RTMPHandleInterrupt(void *pAd);
 
-int (*RTMPSendPackets)(
-	IN	NDIS_HANDLE MiniportAdapterContext,
-	IN	PPNDIS_PACKET ppPacketArray,
-	IN	UINT NumberOfPackets,
-	IN	UINT32 PktTotalLen,
-	IN	RTMP_NET_ETH_CONVERT_DEV_SEARCH Func);
+int RTMP_COM_IoctlHandle(void *pAd, int cmd, void *pData, ULONG Data);
+
+int RTMPSendPackets(NDIS_HANDLE MiniportAdapterContext, PPNDIS_PACKET ppPacketArray,
+	UINT NumberOfPackets, UINT32 PktTotalLen, 
+	RTMP_NET_ETH_CONVERT_DEV_SEARCH Func);
+
+int P2P_PacketSend(PNDIS_PACKET pPktSrc, PNET_DEV pDev,
+	RTMP_NET_PACKET_TRANSMIT Func);
 
 int (*MBSS_PacketSend)(
 	IN	PNDIS_PACKET				pPktSrc, 
@@ -81,55 +76,77 @@ int (*MESH_PacketSend)(
 	IN	PNET_DEV					pDev,
 	IN	RTMP_NET_PACKET_TRANSMIT	Func);
 
-int (*P2P_PacketSend)(
-	IN	PNDIS_PACKET				pPktSrc, 
-	IN	PNET_DEV					pDev,
-	IN	RTMP_NET_PACKET_TRANSMIT	Func);
+#ifdef CONFIG_AP_SUPPORT
+int RTMP_AP_IoctlHandle(void *pAd, RTMP_IOCTL_INPUT_STRUCT *wrq, int cmd,
+	USHORT subcmd, void *pData, ULONG Data);
+#endif /* CONFIG_AP_SUPPORT */
 
-INT (*RTMP_AP_IoctlHandle)(
-	IN	VOID					*pAd, 
-	IN	RTMP_IOCTL_INPUT_STRUCT	*wrq,
-	IN	INT						cmd,
-	IN	USHORT					subcmd,
-	IN	VOID					*pData,
-	IN	ULONG					Data);
+#ifdef CONFIG_STA_SUPPORT
+int RTMP_STA_IoctlHandle(void *pAd, RTMP_IOCTL_INPUT_STRUCT *wrq, int cmd,
+	USHORT subcmd, void *pData, ULONG Data, USHORT priv_flags);
+#endif /* CONFIG_STA_SUPPORT */
 
-INT (*RTMP_STA_IoctlHandle)(
-	IN	VOID					*pAd, 
-	IN	RTMP_IOCTL_INPUT_STRUCT	*wrq,
-	IN	INT						cmd,
-	IN	USHORT					subcmd,
-	IN	VOID					*pData,
-	IN	ULONG					Data,
-	IN  USHORT                  priv_flags);
+void (*RTMPDrvSTAOpen)(void *pAd);
+void (*RTMPDrvAPOpen)(void *pAd);
 
-VOID (*RTMPDrvSTAOpen)(VOID *pAd);
-VOID (*RTMPDrvAPOpen)(VOID *pAd);
+void (*RTMPDrvSTAClose)(void *pAd, void *net_dev);
+void (*RTMPDrvAPClose)(void *pAd, void *net_dev);
 
-VOID (*RTMPDrvSTAClose)(VOID *pAd, VOID *net_dev);
-VOID (*RTMPDrvAPClose)(VOID *pAd, VOID *net_dev);
+void RTMPInfClose(void *pAd);
 
-VOID (*RTMPInfClose)(VOID *pAd);
-
-int (*rt28xx_init)(VOID *pAd,  PSTRING pDefaultMac, PSTRING pHostName);
+int rt28xx_init(void *pAd,  PSTRING pDefaultMac, PSTRING pHostName);
 } RTMP_DRV_ABL_OPS;
 
 extern RTMP_DRV_ABL_OPS *pRtmpDrvOps;
 
-VOID RtmpDrvOpsInit(
-	OUT 	VOID				*pDrvOpsOrg,
-	INOUT	VOID				*pDrvNetOpsOrg,
+void RtmpDrvOpsInit(
+	OUT 	void				*pDrvOpsOrg,
+	INOUT	void				*pDrvNetOpsOrg,
 	IN		RTMP_PCI_CONFIG		*pPciConfig,
 	IN		RTMP_USB_CONFIG		*pUsbConfig);
 #endif /* OS_ABL_FUNC_SUPPORT */
 #endif /* LINUX */
 
+/* ========================================================================== */
+int rt28xx_close(void *dev);
+int rt28xx_open(void *dev);
 
+__inline int VIRTUAL_IF_UP(void *pAd)
+{
+	RT_CMD_INF_UP_DOWN InfConf = { rt28xx_open, rt28xx_close };
+	if (RTMP_COM_IoctlHandle(pAd, CMD_RTPRIV_IOCTL_VIRTUAL_INF_UP,
+			&InfConf, 0) != NDIS_STATUS_SUCCESS)
+		return -1;
+	return 0;
+}
+
+__inline void VIRTUAL_IF_DOWN(void *pAd)
+{
+	RT_CMD_INF_UP_DOWN InfConf = { rt28xx_open, rt28xx_close };
+	RTMP_COM_IoctlHandle(pAd, CMD_RTPRIV_IOCTL_VIRTUAL_INF_DOWN,
+			&InfConf, 0);
+	return;
+}
+
+#ifdef RTMP_MODULE_OS
+
+#ifdef CONFIG_AP_SUPPORT
+int rt28xx_ap_ioctl(PNET_DEV net_dev, struct ifreq *rq, int cmd);
+#endif
+
+#ifdef CONFIG_STA_SUPPORT
+int rt28xx_sta_ioctl(PNET_DEV net_dev, struct ifreq *rq, int cmd);
+#endif
+
+PNET_DEV RtmpPhyNetDevInit(void *pAd, RTMP_OS_NETDEV_OP_HOOK *pNetHook);
+BOOLEAN RtmpPhyNetDevExit(void *pAd, PNET_DEV net_dev);
+
+#endif /* RTMP_MODULE_OS */
 
 
 /* ========================================================================== */
 /* operators used in DRIVER module */
-typedef void (*RTMP_DRV_USB_COMPLETE_HANDLER)(VOID *pURB);
+typedef void (*RTMP_DRV_USB_COMPLETE_HANDLER)(void *pURB);
 
 typedef struct _RTMP_NET_ABL_OPS {
 
@@ -158,8 +175,8 @@ RTMP_DRV_USB_COMPLETE_HANDLER	RtmpDrvUsbBulkCmdRspEventComplete;
 
 extern RTMP_NET_ABL_OPS *pRtmpDrvNetOps;
 
-VOID RtmpNetOpsInit(VOID *pNetOpsOrg);
-VOID RtmpNetOpsSet(VOID *pNetOpsOrg);
+void RtmpNetOpsInit(void *pNetOpsOrg);
+void RtmpNetOpsSet(void *pNetOpsOrg);
 
 
 /* ========================================================================== */
@@ -189,19 +206,12 @@ VOID RtmpNetOpsSet(VOID *pNetOpsOrg);
 
 #else /* RTMP_MODULE_OS && OS_ABL_FUNC_SUPPORT */
 
-NDIS_STATUS RTMPAllocAdapterBlock(PVOID handle, VOID **ppAdapter);
-VOID RTMPFreeAdapter(VOID *pAd);
-BOOLEAN RtmpRaDevCtrlExit(VOID *pAd);
-INT RtmpRaDevCtrlInit(VOID *pAd, RTMP_INF_TYPE infType);
-VOID RTMPHandleInterrupt(VOID *pAd);
+NDIS_STATUS RTMPAllocAdapterBlock(PVOID handle, void **ppAdapter);
+void RTMPFreeAdapter(void *pAd);
+BOOLEAN RtmpRaDevCtrlExit(void *pAd);
+INT RtmpRaDevCtrlInit(void *pAd, RTMP_INF_TYPE infType);
+void RTMPHandleInterrupt(void *pAd);
 
-INT RTMP_COM_IoctlHandle(
-	IN	VOID					*pAd, 
-	IN	RTMP_IOCTL_INPUT_STRUCT	*wrq,
-	IN	INT						cmd,
-	IN	USHORT					subcmd,
-	IN	VOID					*pData,
-	IN	ULONG					Data);
 
 int	RTMPSendPackets(
 	IN	NDIS_HANDLE		MiniportAdapterContext,
@@ -238,79 +248,39 @@ int P2P_PacketSend(
 
 #ifdef CONFIG_STA_SUPPORT
 INT RTMP_STA_IoctlHandle(
-	IN	VOID					*pAd, 
+	IN	void					*pAd, 
 	IN	RTMP_IOCTL_INPUT_STRUCT	*wrq,
 	IN	INT						cmd,
 	IN	USHORT					subcmd,
-	IN	VOID					*pData,
+	IN	void					*pData,
 	IN	ULONG					Data,
 	IN  USHORT                  priv_flags );
 #endif /* CONFIG_STA_SUPPORT */
 
-VOID RTMPDrvSTAOpen(VOID *pAd);
-VOID RTMPDrvAPOpen(VOID *pAd);
-VOID RTMPDrvSTAClose(VOID *pAd, VOID *net_dev);
-VOID RTMPDrvAPClose(VOID *pAd, VOID *net_dev);
-VOID RTMPInfClose(VOID *pAd);
+void RTMPDrvSTAOpen(void *pAd);
+void RTMPDrvAPOpen(void *pAd);
+void RTMPDrvSTAClose(void *pAd, void *net_dev);
+void RTMPDrvAPClose(void *pAd, void *net_dev);
+void RTMPInfClose(void *pAd);
 
 int rt28xx_init(
-	IN VOID						*pAd, 
+	IN void						*pAd, 
 	IN PSTRING					pDefaultMac, 
 	IN PSTRING					pHostName);
 
-PNET_DEV RtmpPhyNetDevMainCreate(VOID *pAd);
+PNET_DEV RtmpPhyNetDevMainCreate(void *pAd);
 #endif /* RTMP_MODULE_OS */
 
 
 
 
-/* ========================================================================== */
-int rt28xx_close(VOID *dev);
-int rt28xx_open(VOID *dev);
-
-__inline INT VIRTUAL_IF_UP(VOID *pAd)
-{
-	RT_CMD_INF_UP_DOWN InfConf = { rt28xx_open, rt28xx_close };
-	if (RTMP_COM_IoctlHandle(pAd, NULL, CMD_RTPRIV_IOCTL_VIRTUAL_INF_UP,
-						0, &InfConf, 0) != NDIS_STATUS_SUCCESS)
-		return -1;
-	return 0;
-}
-
-__inline VOID VIRTUAL_IF_DOWN(VOID *pAd)
-{
-	RT_CMD_INF_UP_DOWN InfConf = { rt28xx_open, rt28xx_close };
-	RTMP_COM_IoctlHandle(pAd, NULL, CMD_RTPRIV_IOCTL_VIRTUAL_INF_DOWN,
-						0, &InfConf, 0);
-	return;
-}
-
-#ifdef RTMP_MODULE_OS
 
 
-#ifdef CONFIG_STA_SUPPORT
-INT rt28xx_sta_ioctl(
-	IN	PNET_DEV		net_dev, 
-	IN	OUT	struct ifreq	*rq, 
-	IN	INT			cmd);
-#endif /* CONFIG_STA_SUPPORT */
-
-PNET_DEV RtmpPhyNetDevInit(
-	IN VOID						*pAd,
-	IN RTMP_OS_NETDEV_OP_HOOK	*pNetHook);
-
-BOOLEAN RtmpPhyNetDevExit(
-	IN VOID						*pAd, 
-	IN PNET_DEV					net_dev);
-
-#endif /* RTMP_MODULE_OS && OS_ABL_FUNC_SUPPORT */
-
-
-VOID RT28xx_MBSS_Init(
-	IN VOID *pAd,
+void RT28xx_MBSS_Init(
+	IN void *pAd,
 	IN PNET_DEV main_dev_p);
-VOID RT28xx_MBSS_Remove(
-	IN VOID *pAd);
+void RT28xx_MBSS_Remove(
+	IN void *pAd);
 INT MBSS_VirtualIF_Open(
 	IN	PNET_DEV			dev_p);
 INT MBSS_VirtualIF_Close(
@@ -320,11 +290,11 @@ INT MBSS_VirtualIF_PacketSend(
 	IN PNET_DEV				dev_p);
 INT MBSS_VirtualIF_Ioctl(
 	IN PNET_DEV				dev_p, 
-	IN OUT VOID 			*rq_p, 
+	IN OUT void 			*rq_p, 
 	IN INT cmd);
 
-VOID RT28xx_WDS_Init(
-	IN VOID					*pAd,
+void RT28xx_WDS_Init(
+	IN void					*pAd,
 	IN PNET_DEV				net_dev);
 INT WdsVirtualIFSendPackets(
 	IN PNDIS_PACKET			pSkb,
@@ -335,13 +305,13 @@ INT WdsVirtualIF_close(
 	IN PNET_DEV				dev);
 INT WdsVirtualIF_ioctl(
 	IN PNET_DEV				net_dev, 
-	IN OUT VOID				*rq, 
+	IN OUT void				*rq, 
 	IN INT					cmd);
-VOID RT28xx_WDS_Remove(
-	IN VOID					*pAd);
+void RT28xx_WDS_Remove(
+	IN void					*pAd);
 
-VOID RT28xx_ApCli_Init(
-	IN VOID 				*pAd,
+void RT28xx_ApCli_Init(
+	IN void 				*pAd,
 	IN PNET_DEV				main_dev_p);
 INT ApCli_VirtualIF_Open(
 	IN PNET_DEV				dev_p);
@@ -352,17 +322,17 @@ INT ApCli_VirtualIF_PacketSend(
 	IN PNET_DEV				pDev);
 INT ApCli_VirtualIF_Ioctl(
 	IN PNET_DEV				dev_p, 
-	IN OUT VOID 			*rq_p, 
+	IN OUT void 			*rq_p, 
 	IN INT 					cmd);
-VOID RT28xx_ApCli_Remove(
-	IN VOID 				*pAd);
+void RT28xx_ApCli_Remove(
+	IN void 				*pAd);
 
-VOID RTMP_Mesh_Init(
-	IN VOID					*pAd,
+void RTMP_Mesh_Init(
+	IN void					*pAd,
 	IN PNET_DEV				main_dev_p,
 	IN PSTRING				pHostName);
-VOID RTMP_Mesh_Remove(
-	IN VOID 				*pAd);
+void RTMP_Mesh_Remove(
+	IN void 				*pAd);
 INT Mesh_VirtualIF_Open(
 	IN PNET_DEV				pDev);
 INT Mesh_VirtualIF_Close(
@@ -372,11 +342,11 @@ INT Mesh_VirtualIF_PacketSend(
 	IN PNET_DEV				pDev);
 INT Mesh_VirtualIF_Ioctl(
 	IN PNET_DEV				dev_p, 
-	IN OUT VOID				*rq_p, 
+	IN OUT void				*rq_p, 
 	IN INT 					cmd);
 
-VOID RTMP_P2P_Init(
-		 IN VOID			 *pAd,
+void RTMP_P2P_Init(
+		 IN void			 *pAd,
 		 IN PNET_DEV main_dev_p);
  
  INT P2P_VirtualIF_Open(
@@ -391,11 +361,11 @@ VOID RTMP_P2P_Init(
  
  INT P2P_VirtualIF_Ioctl(
 	 IN PNET_DEV			 dev_p,
-	 IN OUT VOID	 *rq_p,
+	 IN OUT void	 *rq_p,
 	 IN INT cmd);
 
-VOID RTMP_P2P_Remove(
-	IN VOID				*pAd);
+void RTMP_P2P_Remove(
+	IN void				*pAd);
 
 
 /* communication with RALINK DRIVER module in NET module */

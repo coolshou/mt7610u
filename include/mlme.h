@@ -1,30 +1,32 @@
 /*
- *************************************************************************
+ ***************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology 5th Rd.
+ * Science-based Industrial Park
+ * Hsin-chu, Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002-2004, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved. Ralink's source code is an unpublished work and the
+ * use of a copyright notice does not imply otherwise. This source code
+ * contains confidential trade secret material of Ralink Tech. Any attemp
+ * or participation in deciphering, decoding, reverse engineering or in any
+ * way altering the source code is stricitly prohibited, unless the prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************
 
+	Module Name:
+	mlme.h
 
+	Abstract:
+
+	Revision History:
+	Who			When			What
+	--------	----------		----------------------------------------------
+	John Chang	2003-08-28		Created
+	John Chang  2004-09-06      modified for RT2600
+	
+*/
 #ifndef __MLME_H__
 #define __MLME_H__
 
@@ -64,7 +66,6 @@
 #define JAP_W53	3
 #define JAP_W56	4
 #define MAX_RD_REGION 5
-
 #define BEACON_LOST_TIME            4 * OS_HZ    /* 2048 msec = 2 sec */
 
 #define DLS_TIMEOUT                 1200      /* unit: msec */
@@ -74,7 +75,7 @@
 #define SHORT_CHANNEL_TIME          90        /* unit: msec */
 #define MIN_CHANNEL_TIME            110        /* unit: msec, for dual band scan */
 #define MAX_CHANNEL_TIME            140       /* unit: msec, for single band scan */
-#define	FAST_ACTIVE_SCAN_TIME	    30 		  /* Active scan waiting for probe response time */
+#define FAST_ACTIVE_SCAN_TIME	    30 		  /* Active scan waiting for probe response time */
 #define CW_MIN_IN_BITS              4         /* actual CwMin = 2^CW_MIN_IN_BITS - 1 */
 #define AUTO_CHANNEL_SEL_TIMEOUT		400		/* uint: msec */
 #define LINK_DOWN_TIMEOUT           20000      /* unit: msec */
@@ -120,6 +121,11 @@ extern UINT32 CW_MAX_IN_BITS;
 
 #define BSS_NOT_FOUND                    0xFFFFFFFF
 
+#ifdef CONFIG_AP_SUPPORT
+#ifndef CONFIG_STA_SUPPORT
+#define MAX_LEN_OF_MLME_QUEUE            20 /*10 */
+#endif
+#endif /* CONFIG_AP_SUPPORT */
 
 #ifdef CONFIG_STA_SUPPORT
 #define MAX_LEN_OF_MLME_QUEUE            40 /*10 */
@@ -141,6 +147,8 @@ enum SCAN_MODE{
 	SCAN_CISCO_NOISE = 0x82,	/* single channel only, for noise histogram collection */
 	SCAN_CISCO_CHANNEL_LOAD = 0x83,	/* single channel only, for channel load collection */
 	SCAN_PASSIVE_MAX,
+
+	SCAN_TYPE_MAX
 };
 
 #define SCAN_MASK	0x80
@@ -497,48 +505,120 @@ typedef struct  _TRIGGER_EVENT_TAB{
 } TRIGGER_EVENT_TAB, *PTRIGGER_EVENT_TAB;
 
 
-/* 7.3.27 20/40 Bss Coexistence Mgmt capability used in extended capabilities information IE( ID = 127 = IE_EXT_CAPABILITY). */
-/*	This is the first octet and was defined in 802.11n D3.03 and 802.11yD9.0 */
+/*
+	Extended capabilities information IE( ID = 127 = IE_EXT_CAPABILITY)
+	
+*/
 typedef struct GNU_PACKED _EXT_CAP_INFO_ELEMENT{
 #ifdef RT_BIG_ENDIAN
-	// TODO: shiang-6590, check the data structure format if this IE
-	UINT32	rsv7:1;
+	UINT32 interworking:1;
 	UINT32	TDLSChSwitchSupport:1; /* bit30: TDLS Channel Switching */
 	UINT32	TDLSPeerPSMSupport:1; /* bit29: TDLS Peer PSM Support */
 	UINT32	UAPSDBufSTASupport:1; /* bit28: Peer U-APSD Buffer STA Support */
-	UINT32	rsv6:1;
+	UINT32 utc_tsf_offset:1;
 	UINT32	DMSSupport:1;
-	UINT32	rsv5:6;
+	UINT32 ssid_list:1;
+	UINT32 channel_usage:1;
+	UINT32 timing_measurement:1;
+	UINT32 mbssid:1;
+	UINT32 ac_sta_cnt:1;
+	UINT32 qos_traffic_cap:1;
 	UINT32	BssTransitionManmt:1;
-	UINT32	rsv4:1;
+	UINT32 tim_bcast:1;
 	UINT32	WNMSleepSupport:1;/*bit 17*/
 	UINT32	TFSSupport:1;/*bit 16*/
-	UINT32	rsv3:4;
+	UINT32 geospatial_location:1;
+	UINT32 civic_location:1;
+	UINT32 collocated_interference_report:1;
+	UINT32 proxy_arp:1;
 	UINT32	FMSSupport:1;/*bit 11*/
-	UINT32	rsv2:8;
+	UINT32 location_tracking:1;
+	UINT32 mcast_diagnostics:1;
+	UINT32 diagnostics:1;
+	UINT32 event:1;
+	UINT32 s_psmp_support:1;
+	UINT32 rsv5:1;
+	UINT32 psmp_cap:1;
+	UINT32 rsv3:1;
 	UINT32	ExtendChannelSwitch:1;
-	UINT32	rsv:1;
+	UINT32 rsv1:1;
 	UINT32	BssCoexistMgmtSupport:1;
 #else
 	UINT32	BssCoexistMgmtSupport:1;
-	UINT32	rsv:1;
+	UINT32 rsv1:1;
 	UINT32	ExtendChannelSwitch:1;
-	UINT32	rsv2:8;
+	UINT32 rsv3:1;
+	UINT32 psmp_cap:1;
+	UINT32 rsv5:1;
+	UINT32 s_psmp_support:1;
+	UINT32 event:1;
+	UINT32 diagnostics:1;
+	UINT32 mcast_diagnostics:1;
+	UINT32 location_tracking:1;	
 	UINT32	FMSSupport:1;/*bit 11*/
-	UINT32	rsv3:4;
+	UINT32 proxy_arp:1;
+	UINT32 collocated_interference_report:1;
+	UINT32 civic_location:1;
+	UINT32 geospatial_location:1;
 	UINT32	TFSSupport:1;/*bit 16*/
 	UINT32	WNMSleepSupport:1;/*bit 17*/
-	UINT32	rsv4:1;
+	UINT32 tim_bcast:1;
 	UINT32	BssTransitionManmt:1;
-	UINT32	rsv5:6;
+	UINT32 qos_traffic_cap:1;
+	UINT32 ac_sta_cnt:1;
+	UINT32 mbssid:1;
+	UINT32 timing_measurement:1;
+	UINT32 channel_usage:1;
+	UINT32 ssid_list:1;
 	UINT32	DMSSupport:1;
-	UINT32	rsv6:1;
+	UINT32 utc_tsf_offset:1;
 	UINT32	UAPSDBufSTASupport:1; /* bit28: Peer U-APSD Buffer STA Support */
 	UINT32	TDLSPeerPSMSupport:1; /* bit29: TDLS Peer PSM Support */
 	UINT32	TDLSChSwitchSupport:1; /* bit30: TDLS Channel Switching */
-	UINT32	rsv7:1;
+	UINT32 interworking:1;
 #endif /* RT_BIG_ENDIAN */
 
+#ifdef RT_BIG_ENDIAN
+	UINT32 rsv63:1;
+	UINT32 operating_mode_notification:1;
+	UINT32 tdls_wider_bw:1;
+	UINT32 rsv49:13;
+	UINT32 utf8_ssid:1;
+	UINT32 rsv47:1;
+	UINT32 wnm_notification:1;
+	UINT32 uapsd_coex:1;
+	UINT32 id_location:1;
+	UINT32 service_interval_granularity:2;
+	UINT32 reject_unadmitted_frame:1;
+	UINT32 TDLSChSwitchProhibited:1; /* bit39: TDLS Channel Switching Prohibited */
+	UINT32 TDLSProhibited:1; /* bit38: TDLS Prohibited */
+	UINT32 TDLSSupport:1; /* bit37: TDLS Support */
+	UINT32 msgcf_cap:1;
+	UINT32 rsv35:1;
+	UINT32 sspn_inf:1;
+	UINT32 ebr:1;
+	UINT32 qosmap:1;
+#else
+	UINT32 qosmap:1;
+	UINT32 ebr:1;
+	UINT32 sspn_inf:1;
+	UINT32 rsv35:1;
+	UINT32 msgcf_cap:1;
+	UINT32 TDLSSupport:1; /* bit37: TDLS Support */
+	UINT32 TDLSProhibited:1; /* bit38: TDLS Prohibited */
+	UINT32 TDLSChSwitchProhibited:1; /* bit39: TDLS Channel Switching Prohibited */
+	UINT32 reject_unadmitted_frame:1;
+	UINT32 service_interval_granularity:2;
+	UINT32 id_location:1;
+	UINT32 uapsd_coex:1;
+	UINT32 wnm_notification:1;
+	UINT32 rsv47:1;
+	UINT32 utf8_ssid:1;
+	UINT32 rsv49:13;
+	UINT32 tdls_wider_bw:1;
+	UINT32 operating_mode_notification:1;
+	UINT32 rsv63:1;
+#endif // RT_BIG_ENDIAN //
 }EXT_CAP_INFO_ELEMENT, *PEXT_CAP_INFO_ELEMENT;
 
 
@@ -561,9 +641,9 @@ typedef struct GNU_PACKED _BSS_2040_INTOLERANT_CH_REPORT{
 
 /* The structure for channel switch annoucement IE. This is in 802.11n D3.03 */
 typedef struct GNU_PACKED _CHA_SWITCH_ANNOUNCE_IE{
-	UCHAR			SwitchMode;	/*channel switch mode */
-	UCHAR			NewChannel;	/* */
-	UCHAR			SwitchCount;	/* */
+	UCHAR			SwitchMode; /*channel switch mode */
+	UCHAR			NewChannel;
+	UCHAR			SwitchCount;
 } CHA_SWITCH_ANNOUNCE_IE, *PCHA_SWITCH_ANNOUNCE_IE;
 
 
@@ -1020,9 +1100,9 @@ typedef struct GNU_PACKED _HT_EXT_CHANNEL_SWITCH_ANNOUNCEMENT_IE{
 #define SEQ_WITHIN_WIN(_SEQ1, _SEQ2, _WIN, _Limit) (SEQ_LARGER(_SEQ1, _SEQ2, _Limit) &&  \
 												SEQ_SMALLER(_SEQ1, ((_SEQ2+_WIN+1)&_Limit), _Limit))
 
-/* */
-/* Contention-free parameter (without ID and Length) */
-/* */
+/*
+	Contention-free parameter (without ID and Length)
+*/
 typedef struct GNU_PACKED _CF_PARM{
     BOOLEAN     bValid;         /* 1: variable contains valid value */
     UCHAR       CfpCount;
@@ -1030,6 +1110,7 @@ typedef struct GNU_PACKED _CF_PARM{
     USHORT      CfpMaxDuration;
     USHORT      CfpDurRemaining;
 } CF_PARM, *PCF_PARM;
+
 
 typedef	struct _CIPHER_SUITE {
 	NDIS_802_11_ENCRYPTION_STATUS	PairCipher;		/* Unicast cipher 1, this one has more secured cipher suite */
@@ -1057,6 +1138,7 @@ typedef struct {
     BOOLEAN     bACM[4];      /* 1: Admission Control of AC_BK is mandattory */
 } EDCA_PARM, *PEDCA_PARM;
 
+
 /* QBSS LOAD information from QAP's BEACON/ProbeRsp */
 typedef struct {
     BOOLEAN     bValid;                     /* 1: variable contains valid value */
@@ -1064,6 +1146,7 @@ typedef struct {
     UCHAR       ChannelUtilization;
     USHORT      RemainingAdmissionControl;  /* in unit of 32-us */
 } QBSS_LOAD_PARM, *PQBSS_LOAD_PARM;
+
 
 /* QBSS Info field in QSTA's assoc req */
 typedef struct GNU_PACKED _QBSS_STA_INFO_PARM{
@@ -1127,25 +1210,32 @@ typedef struct {
 #endif /* CONFIG_STA_SUPPORT */
 
 
-typedef struct {
-    UCHAR   Bssid[MAC_ADDR_LEN];
-    UCHAR   Channel;
-	UCHAR   CentralChannel;	/*Store the wide-band central channel for 40MHz.  .used in 40MHz AP. Or this is the same as Channel. */
-    UCHAR   BssType;
-    USHORT  AtimWin;
-    USHORT  BeaconPeriod;
+typedef struct _BSS_ENTRY{
+	UCHAR MacAddr[MAC_ADDR_LEN];
+	UCHAR Bssid[MAC_ADDR_LEN];
+	UCHAR Channel;
+	UCHAR CentralChannel;	/*Store the wide-band central channel for 40MHz.  .used in 40MHz AP. Or this is the same as Channel. */
+	ULONG ClientStatusFlags;
+	UCHAR BssType;
+	USHORT AtimWin;
+	USHORT BeaconPeriod;
 
-    UCHAR   SupRate[MAX_LEN_OF_SUPPORTED_RATES];
-    UCHAR   SupRateLen;
-    UCHAR   ExtRate[MAX_LEN_OF_SUPPORTED_RATES];
-    UCHAR   ExtRateLen;
+	UCHAR SupRate[MAX_LEN_OF_SUPPORTED_RATES];
+	UCHAR SupRateLen;
+	UCHAR ExtRate[MAX_LEN_OF_SUPPORTED_RATES];
+	UCHAR ExtRateLen;
 	HT_CAPABILITY_IE HtCapability;
-	UCHAR			HtCapabilityLen;
+	UCHAR HtCapabilityLen;
 	ADD_HT_INFO_IE AddHtInfo;	/* AP might use this additional ht info IE */
-	UCHAR			AddHtInfoLen;
+	UCHAR AddHtInfoLen;
 	EXT_CAP_INFO_ELEMENT ExtCapInfo;	/* this is the extened capibility IE appreed in MGMT frames. Doesn't need to update once set in Init. */
-	UCHAR			NewExtChanOffset;
-	CHAR    Rssi;
+	UCHAR NewExtChanOffset;
+	CHAR Rssi;
+
+#ifdef CFG80211_SCAN_SIGNAL_AVG
+	SHORT	AvgRssiX8;
+	CHAR	AvgRssi;
+#endif /* CFG80211_SCAN_SIGNAL_AVG */	
 
 #ifdef DOT11_VHT_AC
 	UCHAR vht_cap_len;
@@ -1155,68 +1245,69 @@ typedef struct {
 #endif /* DOT11_VHT_AC */
 
 
-	CHAR	MinSNR;	
-    UCHAR   Privacy;			/* Indicate security function ON/OFF. Don't mess up with auth mode. */
-	UCHAR	Hidden;
+	CHAR MinSNR;	
+	UCHAR Privacy;			/* Indicate security function ON/OFF. Don't mess up with auth mode. */
+	UCHAR Hidden;
 
-    USHORT  DtimPeriod;
-    USHORT  CapabilityInfo;
+	USHORT DtimPeriod;
+	USHORT CapabilityInfo;
 
-    USHORT  CfpCount;
-    USHORT  CfpPeriod;
-    USHORT  CfpMaxDuration;
-    USHORT  CfpDurRemaining;
-    UCHAR   SsidLen;
-    CHAR    Ssid[MAX_LEN_OF_SSID];
+	USHORT CfpCount;
+	USHORT CfpPeriod;
+	USHORT CfpMaxDuration;
+	USHORT CfpDurRemaining;
+	UCHAR SsidLen;
+	CHAR Ssid[MAX_LEN_OF_SSID];
     
-	UCHAR	SameRxTimeCount;
-	ULONG   LastBeaconRxTimeA; /* OS's timestamp */
-    ULONG   LastBeaconRxTime; /* OS's timestamp */
+	UCHAR SameRxTimeCount;
+	ULONG LastBeaconRxTimeA; /* OS's timestamp */
+	ULONG LastBeaconRxTime; /* OS's timestamp */
 
-	BOOLEAN	bSES;
+	BOOLEAN bSES;
 
 	/* New for WPA2 */
-	CIPHER_SUITE					WPA;			/* AP announced WPA cipher suite */
-	CIPHER_SUITE					WPA2;			/* AP announced WPA2 cipher suite */
+	CIPHER_SUITE WPA;			/* AP announced WPA cipher suite */
+	CIPHER_SUITE WPA2;			/* AP announced WPA2 cipher suite */
 
 	/* New for microsoft WPA support */
-	NDIS_802_11_FIXED_IEs	FixIEs;
-	NDIS_802_11_AUTHENTICATION_MODE	AuthModeAux;	/* Addition mode for WPA2 / WPA capable AP */
-	NDIS_802_11_AUTHENTICATION_MODE	AuthMode;	
+	NDIS_802_11_FIXED_IEs FixIEs;
+	NDIS_802_11_AUTHENTICATION_MODE AuthModeAux;	/* Addition mode for WPA2 / WPA capable AP */
+	NDIS_802_11_AUTHENTICATION_MODE AuthMode;	
 	NDIS_802_11_WEP_STATUS	WepStatus;				/* Unicast Encryption Algorithm extract from VAR_IE */
-	USHORT					VarIELen;				/* Length of next VIE include EID & Length */
-	UCHAR					VarIEs[MAX_VIE_LEN];
-	USHORT					VarIeFromProbeRspLen;
-	UCHAR					*pVarIeFromProbRsp;
+	USHORT VarIELen;				/* Length of next VIE include EID & Length */
+	UCHAR VarIEs[MAX_VIE_LEN];
+	USHORT VarIeFromProbeRspLen;
+	UCHAR *pVarIeFromProbRsp;
+#ifdef DOT11W_PMF_SUPPORT
+    BOOLEAN IsSupportSHA256KeyDerivation;
+#endif /* DOT11W_PMF_SUPPORT */            
 
 	/* CCX Ckip information */
-    UCHAR   CkipFlag;
+	UCHAR CkipFlag;
 
 	/* CCX 2 TSF */
-	UCHAR	PTSF[4];		/* Parent TSF */
-	UCHAR	TTSF[8];		/* Target TSF */
+	UCHAR PTSF[4];		/* Parent TSF */
+	UCHAR TTSF[8];		/* Target TSF */
 
     /* 802.11e d9, and WMM */
-	EDCA_PARM           EdcaParm;
+	EDCA_PARM EdcaParm;
 	QOS_CAPABILITY_PARM QosCapability;
-	QBSS_LOAD_PARM      QbssLoad;
+	QBSS_LOAD_PARM QbssLoad;
 
 
 
 #ifdef CONFIG_STA_SUPPORT
-    WPA_IE_     WpaIE;
-    WPA_IE_     RsnIE;
-	WPA_IE_ 	WpsIE;
+	WPA_IE_ WpaIE;
+	WPA_IE_ RsnIE;
+	WPA_IE_ WpsIE;
 
 #ifdef EXT_BUILD_CHANNEL_LIST
-	UCHAR		CountryString[3];
-	BOOLEAN		bHasCountryIE;
+	UCHAR CountryString[3];
+	BOOLEAN bHasCountryIE;
 #endif /* EXT_BUILD_CHANNEL_LIST */
 #endif /* CONFIG_STA_SUPPORT */
 
-	UCHAR   MacAddr[MAC_ADDR_LEN];
-	ULONG ClientStatusFlags;
-} BSS_ENTRY, *PBSS_ENTRY;
+} BSS_ENTRY;
 
 typedef struct {
     UCHAR           BssNr;
@@ -1225,29 +1316,34 @@ typedef struct {
 } BSS_TABLE, *PBSS_TABLE;
 
 
+struct raw_rssi_info{
+	CHAR raw_rssi[3];
+	UCHAR raw_snr;
+};
+
 typedef struct _MLME_QUEUE_ELEM {
-	UCHAR             Msg[MGMT_DMA_BUFFER_SIZE];	/* move here to fix alignment issue for ARM CPU */
-    ULONG             Machine;
-    ULONG             MsgType;
-    ULONG             MsgLen;
-    LARGE_INTEGER     TimeStamp;
-    UCHAR             Rssi0;
-    UCHAR             Rssi1;
-    UCHAR             Rssi2;
-    UCHAR             Signal;
-    UCHAR             Channel;
-    UCHAR             Wcid;
-    BOOLEAN           Occupied;
-	UCHAR			  OpMode;
-	ULONG             Priv;
+	UCHAR Msg[MGMT_DMA_BUFFER_SIZE];	/* move here to fix alignment issue for ARM CPU */
+	ULONG Machine;
+	ULONG MsgType;
+	ULONG MsgLen;
+	LARGE_INTEGER TimeStamp;
+	UCHAR Rssi0;
+	UCHAR Rssi1;
+	UCHAR Rssi2;
+	UCHAR Signal;
+	UCHAR Channel;
+	UCHAR Wcid;
+	BOOLEAN Occupied;
+	UCHAR OpMode;
+	ULONG Priv;
 } MLME_QUEUE_ELEM, *PMLME_QUEUE_ELEM;
 
 typedef struct _MLME_QUEUE {
-    ULONG             Num;
-    ULONG             Head;
-    ULONG             Tail;
-    NDIS_SPIN_LOCK   Lock;
-    MLME_QUEUE_ELEM  Entry[MAX_LEN_OF_MLME_QUEUE];
+	ULONG Num;
+	ULONG Head;
+	ULONG Tail;
+	spinlock_t Lock;
+	MLME_QUEUE_ELEM Entry[MAX_LEN_OF_MLME_QUEUE];
 } MLME_QUEUE, *PMLME_QUEUE;
 
 typedef VOID (*STATE_MACHINE_FUNC)(VOID *pAd, MLME_QUEUE_ELEM *Elem);
@@ -1260,6 +1356,19 @@ typedef struct _STATE_MACHINE {
     STATE_MACHINE_FUNC	*TransFunc;
 } STATE_MACHINE, *PSTATE_MACHINE;
 
+#ifdef CONFIG_AP_SUPPORT
+#ifdef APCLI_SUPPORT
+typedef VOID (*APCLI_STATE_MACHINE_FUNC)(VOID *pAd, MLME_QUEUE_ELEM *Elem, PULONG pCurrState, USHORT ifIndex);
+
+typedef struct _STA_STATE_MACHINE {
+	ULONG Base;
+	ULONG NrState;
+	ULONG NrMsg;
+	ULONG CurrState;
+	APCLI_STATE_MACHINE_FUNC *TransFunc;
+} APCLI_STATE_MACHINE, *PSTA_STATE_MACHINE;
+#endif /* APCLI_SUPPORT */
+#endif /* CONFIG_AP_SUPPORT */
 
 /* MLME AUX data structure that hold temporarliy settings during a connection attempt. */
 /* Once this attemp succeeds, all settings will be copy to pAd->StaActive. */
@@ -1303,6 +1412,7 @@ typedef struct _MLME_AUX {
 	UCHAR vht_op_len;
 	VHT_CAP_IE vht_cap;
 	VHT_OP_IE vht_op;
+	UCHAR vht_cent_ch;
 #endif /* DOT11_VHT_AC */
 
     /* new for QOS */
@@ -1317,16 +1427,20 @@ typedef struct _MLME_AUX {
     BSS_TABLE           RoamTab;        /* AP list eligible for roaming */
     ULONG               BssIdx;
     ULONG               RoamIdx;
-
 	BOOLEAN				CurrReqIsFromNdis;
 
     RALINK_TIMER_STRUCT BeaconTimer, ScanTimer, APScanTimer;
     RALINK_TIMER_STRUCT AuthTimer;
     RALINK_TIMER_STRUCT AssocTimer, ReassocTimer, DisassocTimer;
-
-#ifdef CONFIG_STA_SUPPORT
-#endif /* CONFIG_STA_SUPPORT */
-
+#ifdef CONFIG_AP_SUPPORT
+#ifdef APCLI_SUPPORT
+	USHORT              VarIELen;           /* Length of next VIE include EID & Length */
+    UCHAR               VarIEs[MAX_VIE_LEN];
+    LONG				Rssi; /* Record the rssi value when receive Probe Rsp. */
+	RALINK_TIMER_STRUCT ProbeTimer, ApCliAssocTimer, ApCliAuthTimer;
+	RALINK_TIMER_STRUCT WpaDisassocAndBlockAssocTimer;
+#endif /* APCLI_SUPPORT */
+#endif /* CONFIG_AP_SUPPORT */
 } MLME_AUX, *PMLME_AUX;
 
 typedef struct _MLME_ADDBA_REQ_STRUCT{
@@ -1472,12 +1586,13 @@ typedef struct _IE_lists {
 	VHT_OP_IE vht_op;
 	UCHAR vht_cap_len;
 	UCHAR vht_op_len;
+	UCHAR operating_mode_len;
+	OPERATING_MODE operating_mode;
 #endif /* DOT11_VHT_AC */
 }IE_LISTS;
 
 
 typedef struct _bcn_ie_list {
-	UCHAR Addr1[MAC_ADDR_LEN]; 
 	UCHAR Addr2[MAC_ADDR_LEN]; 
 	UCHAR Bssid[MAC_ADDR_LEN];
 	CHAR Ssid[MAX_LEN_OF_SSID];
@@ -1512,11 +1627,18 @@ typedef struct _bcn_ie_list {
 	UCHAR AddHtInfoLen;
 	ADD_HT_INFO_IE AddHtInfo;
 	UCHAR NewExtChannelOffset;
+#ifdef CONFIG_STA_SUPPORT
+#ifdef NATIVE_WPA_SUPPLICANT_SUPPORT
+	UCHAR selReg;
+#endif /* NATIVE_WPA_SUPPLICANT_SUPPORT */
+#endif /* CONFIG_STA_SUPPORT */
 #ifdef DOT11_VHT_AC
 	VHT_CAP_IE vht_cap_ie;
 	VHT_OP_IE vht_op_ie;
 	UCHAR vht_cap_len;
 	UCHAR vht_op_len;
+	OPERATING_MODE operating_mode;
+	UCHAR vht_op_mode_len;
 #endif /* DOT11_VHT_AC */
 }BCN_IE_LIST;
 

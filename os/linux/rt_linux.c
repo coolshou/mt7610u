@@ -1,5 +1,4 @@
-/*
- *************************************************************************
+/**************************************************************************
  * Ralink Tech Inc.
  * 5F., No.36, Taiyuan St., Jhubei City,
  * Hsinchu County 302,
@@ -24,6 +23,33 @@
  *                                                                       *
  *************************************************************************/
 
+	Module Name:
+	UTIL/rt_linux.c
+
+	Abstract:
+	All functions provided from OS module are put here.
+
+	Note:
+	1. Can not use sizeof() for a structure with any parameter included
+	by any compile option, such as RTMP_ADAPTER.
+
+	Because the RTMP_ADAPTER size in the UTIL module is different with
+	DRIVER/NETIF.
+
+	2. Do not use any structure with any parameter included by PCI/USB/RBUS/
+	AP/STA.
+
+	Because the structure size in the UTIL module is different with
+	DRIVER/NETIF.
+
+	3. Do not use any structure defined in DRIVER module, EX: pAd.
+	So we can do module partition.
+
+	Revision History:
+	Who        When          What
+	---------  ----------    -------------------------------------------
+
+***************************************************************************/
 
 #define RTMP_MODULE_OS
 #define RTMP_MODULE_OS_UTIL
@@ -31,6 +57,7 @@
 #include "rtmp_comm.h"
 #include "rtmp_osabl.h"
 #include "rt_os_util.h"
+#include <linux/rtnetlink.h>
 
 #if defined(CONFIG_RA_HW_NAT) || defined(CONFIG_RA_HW_NAT_MODULE)
 #include "../../../../../../net/nat/hw_nat/ra_nat.h"
@@ -88,7 +115,7 @@ Return Value:
 Note:
 ========================================================================
 */
-VOID RtmpUtilInit(VOID)
+void RtmpUtilInit(void)
 {
 	if (FlgIsUtilInit == FALSE) {
 		OS_NdisAllocateSpinLock(&UtilSemLock);
@@ -97,7 +124,7 @@ VOID RtmpUtilInit(VOID)
 }
 
 /* timeout -- ms */
-static inline VOID __RTMP_SetPeriodicTimer(
+static inline void __RTMP_SetPeriodicTimer(
 	IN OS_NDIS_MINIPORT_TIMER * pTimer,
 	IN unsigned long timeout)
 {
@@ -107,8 +134,8 @@ static inline VOID __RTMP_SetPeriodicTimer(
 }
 
 /* convert NdisMInitializeTimer --> RTMP_OS_Init_Timer */
-static inline VOID __RTMP_OS_Init_Timer(
-	IN VOID *pReserved,
+static inline void __RTMP_OS_Init_Timer(
+	IN void *pReserved,
 	IN OS_NDIS_MINIPORT_TIMER * pTimer,
 	IN TIMER_FUNCTION function,
 	IN PVOID data)
@@ -120,7 +147,7 @@ static inline VOID __RTMP_OS_Init_Timer(
 	}
 }
 
-static inline VOID __RTMP_OS_Add_Timer(
+static inline void __RTMP_OS_Add_Timer(
 	IN OS_NDIS_MINIPORT_TIMER * pTimer,
 	IN unsigned long timeout)
 {
@@ -132,7 +159,7 @@ static inline VOID __RTMP_OS_Add_Timer(
 	add_timer(pTimer);
 }
 
-static inline VOID __RTMP_OS_Mod_Timer(
+static inline void __RTMP_OS_Mod_Timer(
 	IN OS_NDIS_MINIPORT_TIMER * pTimer,
 	IN unsigned long timeout)
 {
@@ -140,7 +167,7 @@ static inline VOID __RTMP_OS_Mod_Timer(
 	mod_timer(pTimer, jiffies + timeout);
 }
 
-static inline VOID __RTMP_OS_Del_Timer(
+static inline void __RTMP_OS_Del_Timer(
 	IN OS_NDIS_MINIPORT_TIMER * pTimer,
 	OUT BOOLEAN *pCancelled)
 {
@@ -158,7 +185,7 @@ static inline VOID __RTMP_OS_Release_Timer(
 
 
 /* Unify all delay routine by using udelay */
-VOID RTMPusecDelay(ULONG usec)
+void RtmpusecDelay(ULONG usec)
 {
 	ULONG i;
 
@@ -171,14 +198,14 @@ VOID RTMPusecDelay(ULONG usec)
 
 
 /* Unify all delay routine by using udelay */
-VOID RtmpOsUsDelay(ULONG value)
+void RtmpOsUsDelay(ULONG value)
 {
 //	ULONG i;
 
 	udelay(value);
 }
 
-VOID RtmpOsMsDelay(ULONG msec)
+void RtmpOsMsDelay(ULONG msec)
 {
 	mdelay(msec);
 }
@@ -250,17 +277,10 @@ NDIS_STATUS os_free_mem(
 
 #if defined(RTMP_RBUS_SUPPORT) || defined(RTMP_FLASH_SUPPORT)
 /* The flag "CONFIG_RALINK_FLASH_API" is used for APSoC Linux SDK */
+
 #ifdef CONFIG_RALINK_FLASH_API
-
-int32_t FlashRead(
-	uint32_t *dst,
-	uint32_t *src,
-	uint32_t count);
-
-int32_t FlashWrite(
-	uint16_t *source,
-	uint16_t *destination,
-	uint32_t numBytes);
+int32_t FlashRead(uint32_t *dst, uint32_t *src, uint32_t count);
+int32_t FlashWrite(uint16_t *source, uint16_t *destination, uint32_t numBytes);
 #else /* CONFIG_RALINK_FLASH_API */
 
 #ifdef RA_MTD_RW_BY_NUM
@@ -278,10 +298,7 @@ extern int ra_mtd_read_nm(char *name, loff_t from, size_t len, u_char *buf);
 
 #endif /* CONFIG_RALINK_FLASH_API */
 
-void RtmpFlashRead(
-	UCHAR *p,
-	ULONG a,
-	ULONG b)
+void RtmpFlashRead(UCHAR *p, ULONG a, ULONG b)
 {
 #ifdef CONFIG_RALINK_FLASH_API
 	FlashRead((uint32_t *) p, (uint32_t *) a, (uint32_t) b);
@@ -294,10 +311,7 @@ void RtmpFlashRead(
 #endif /* CONFIG_RALINK_FLASH_API */
 }
 
-void RtmpFlashWrite(
-	UCHAR * p,
-	ULONG a,
-	ULONG b)
+void RtmpFlashWrite(UCHAR * p, ULONG a, ULONG b)
 {
 #ifdef CONFIG_RALINK_FLASH_API
 	FlashWrite((uint16_t *) p, (uint16_t *) a, (uint32_t) b);
@@ -312,7 +326,7 @@ void RtmpFlashWrite(
 #endif /* defined(RTMP_RBUS_SUPPORT) || defined(RTMP_FLASH_SUPPORT) */
 
 
-PNDIS_PACKET RtmpOSNetPktAlloc(VOID *dummy, int size)
+PNDIS_PACKET RtmpOSNetPktAlloc(void *dummy, int size)
 {
 	struct sk_buff *skb;
 	/* Add 2 more bytes for ip header alignment */
@@ -323,7 +337,7 @@ PNDIS_PACKET RtmpOSNetPktAlloc(VOID *dummy, int size)
 	return ((PNDIS_PACKET) skb);
 }
 
-PNDIS_PACKET RTMP_AllocateFragPacketBuffer(VOID *dummy, ULONG len)
+PNDIS_PACKET RTMP_AllocateFragPacketBuffer(void *dummy, ULONG len)
 {
 	struct sk_buff *pkt;
 
@@ -348,7 +362,7 @@ PNDIS_PACKET RTMP_AllocateFragPacketBuffer(VOID *dummy, ULONG len)
 	The allocated NDIS PACKET must be freed via RTMPFreeNdisPacket()
 */
 NDIS_STATUS RTMPAllocateNdisPacket(
-	IN VOID *pReserved,
+	IN void *pReserved,
 	OUT PNDIS_PACKET *ppPacket,
 	IN UCHAR *pHeader,
 	IN UINT HeaderLen,
@@ -356,7 +370,6 @@ NDIS_STATUS RTMPAllocateNdisPacket(
 	IN UINT DataLen)
 {
 	struct sk_buff *pPacket;
-
 
 	ASSERT(pData);
 	ASSERT(DataLen);
@@ -437,14 +450,14 @@ void RTMP_QueryPacketInfo(
 	if (RTMP_GET_PKT_SG(pPacket)) {
 		struct sk_buff *skb = (struct sk_buff *)pPacket;
 		int i, nr_frags = skb_shinfo(skb)->nr_frags;
-		
+
 		info->BufferCount =  nr_frags + 1;
 		info->PhysicalBufferCount = info->BufferCount;
-		info->sg_list[0].data = (VOID *)GET_OS_PKT_DATAPTR(pPacket);
+		info->sg_list[0].data = (void *)GET_OS_PKT_DATAPTR(pPacket);
 		info->sg_list[0].len = skb_headlen(skb);
 		for (i = 0; i < nr_frags; i++) {
 			skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
-			
+
 			info->sg_list[i+1].data = ((void *) page_address(frag->page) +
 									frag->page_offset);
 			info->sg_list[i+1].len = frag->size;
@@ -452,9 +465,6 @@ void RTMP_QueryPacketInfo(
 	}
 #endif /* TX_PKT_SG */
 }
-
-
-
 
 PNDIS_PACKET DuplicatePacket(
 	IN PNET_DEV pNetDev,
@@ -493,7 +503,7 @@ PNDIS_PACKET duplicate_pkt(
 	PNDIS_PACKET pPacket = NULL;
 
 	if ((skb =
-	     __dev_alloc_skb(HdrLen + DataSize + 2, MEM_ALLOC_FLAG)) != NULL) {
+		 __dev_alloc_skb(HdrLen + DataSize + 2, MEM_ALLOC_FLAG)) != NULL) {
 		MEM_DBG_PKT_ALLOC_INC(skb);
 
 		skb_reserve(skb, 2);
@@ -509,9 +519,9 @@ PNDIS_PACKET duplicate_pkt(
 }
 
 
-#define TKIP_TX_MIC_SIZE		8
+#define TKIP_TX_MIC_SIZE 8
 PNDIS_PACKET duplicate_pkt_with_TKIP_MIC(
-	IN VOID *pReserved,
+	IN void *pReserved,
 	IN PNDIS_PACKET pPacket)
 {
 	struct sk_buff *skb, *newskb;
@@ -525,7 +535,8 @@ PNDIS_PACKET duplicate_pkt_with_TKIP_MIC(
 		MEM_DBG_PKT_FREE_INC(skb);
 
 		if (newskb == NULL) {
-			DBGPRINT(RT_DEBUG_ERROR, ("Extend Tx.MIC for packet failed!, dropping packet!\n"));
+			DBGPRINT(RT_DEBUG_ERROR, 
+					("Extend Tx.MIC for packet failed!, dropping packet!\n"));
 			return NULL;
 		}
 		skb = newskb;
@@ -533,8 +544,6 @@ PNDIS_PACKET duplicate_pkt_with_TKIP_MIC(
 	}
 
 	return OSPKT_TO_RTPKT(skb);
-
-
 }
 
 
@@ -554,7 +563,7 @@ PNDIS_PACKET duplicate_pkt_with_TKIP_MIC(
 	========================================================================
 */
 BOOLEAN RTMPL2FrameTxAction(
-	IN VOID * pCtrlBkPtr,
+	IN void * pCtrlBkPtr,
 	IN PNET_DEV pNetDev,
 	IN RTMP_CB_8023_PACKET_ANNOUNCE _announce_802_3_packet,
 	IN UCHAR apidx,
@@ -566,7 +575,8 @@ BOOLEAN RTMPL2FrameTxAction(
 
 	if (!skb) {
 		DBGPRINT(RT_DEBUG_ERROR,
-			 ("%s : Error! Can't allocate a skb.\n", __FUNCTION__));
+				("%s : Error! Can't allocate a skb.\n",
+				__FUNCTION__));
 		return FALSE;
 	}
 
@@ -583,12 +593,10 @@ BOOLEAN RTMPL2FrameTxAction(
 	/* End this frame */
 	skb_put(GET_OS_PKT_TYPE(skb), data_len);
 
-	DBGPRINT(RT_DEBUG_TRACE, ("%s doen\n", __FUNCTION__));
-
 	_announce_802_3_packet(pCtrlBkPtr, skb, OpMode);
 
+	DBGPRINT(RT_DEBUG_TRACE, ("%s done\n", __FUNCTION__));
 	return TRUE;
-
 }
 
 
@@ -602,13 +610,13 @@ PNDIS_PACKET ExpandPacket(
 
 	skb = RTPKT_TO_OSPKT(pPacket);
 	if (skb_cloned(skb) || (skb_headroom(skb) < ext_head_len)
-	    || (skb_tailroom(skb) < ext_tail_len)) {
+		|| (skb_tailroom(skb) < ext_tail_len)) {
 		UINT32 head_len =
-		    (skb_headroom(skb) <
-		     ext_head_len) ? ext_head_len : skb_headroom(skb);
+			(skb_headroom(skb) <
+			 ext_head_len) ? ext_head_len : skb_headroom(skb);
 		UINT32 tail_len =
-		    (skb_tailroom(skb) <
-		     ext_tail_len) ? ext_tail_len : skb_tailroom(skb);
+			(skb_tailroom(skb) <
+			 ext_tail_len) ? ext_tail_len : skb_tailroom(skb);
 
 		/* alloc a new skb and copy the packet */
 		newskb = skb_copy_expand(skb, head_len, tail_len, GFP_ATOMIC);
@@ -618,7 +626,7 @@ PNDIS_PACKET ExpandPacket(
 
 		if (newskb == NULL) {
 			DBGPRINT(RT_DEBUG_ERROR,
-				 ("Extend Tx buffer for WPI failed!, dropping packet!\n"));
+					("Extend Tx buffer for WPI failed!, dropping packet!\n"));
 			return NULL;
 		}
 		skb = newskb;
@@ -630,7 +638,7 @@ PNDIS_PACKET ExpandPacket(
 }
 
 PNDIS_PACKET ClonePacket(
-	IN VOID *pReserved,
+	IN void *pReserved,
 	IN PNDIS_PACKET pPacket,
 	IN PUCHAR pData,
 	IN ULONG DataSize)
@@ -656,15 +664,13 @@ PNDIS_PACKET ClonePacket(
 	return pClonedPkt;
 }
 
-VOID RtmpOsPktInit(
+void RtmpOsPktInit(
 	IN PNDIS_PACKET pNetPkt,
 	IN PNET_DEV pNetDev,
 	IN UCHAR *pData,
 	IN USHORT DataSize)
 {
-	PNDIS_PACKET pRxPkt;
-
-	pRxPkt = RTPKT_TO_OSPKT(pNetPkt);
+	PNDIS_PACKET pRxPkt = RTPKT_TO_OSPKT(pNetPkt);
 
 	SET_OS_PKT_NETDEV(pRxPkt, pNetDev);
 	SET_OS_PKT_DATAPTR(pRxPkt, pData);
@@ -700,12 +706,10 @@ void wlan_802_11_to_802_3_packet(
 	/* copy 802.3 header */
 
 #ifdef CONFIG_STA_SUPPORT
-	RT_CONFIG_IF_OPMODE_ON_STA(OpMode)
-	{
-	    NdisMoveMemory(skb_push(pOSPkt, LENGTH_802_3), pHeader802_3, LENGTH_802_3);
+	RT_CONFIG_IF_OPMODE_ON_STA(OpMode) {
+		NdisMoveMemory(skb_push(pOSPkt, LENGTH_802_3), pHeader802_3, LENGTH_802_3);
 	}
 #endif /* CONFIG_STA_SUPPORT */
-
 }
 
 
@@ -754,8 +758,8 @@ void hex_dump(char *str, UCHAR *pSrcBufVA, UINT SrcBufLen)
 
 	========================================================================
 */
-VOID RtmpOsSendWirelessEvent(
-	IN VOID *pAd,
+void RtmpOsSendWirelessEvent(
+	IN void *pAd,
 	IN USHORT Event_flag,
 	IN PUCHAR pAddr,
 	IN UCHAR BssIdx,
@@ -766,8 +770,8 @@ VOID RtmpOsSendWirelessEvent(
 	pFunc(pAd, Event_flag, pAddr, BssIdx, Rssi);
 #else
 	DBGPRINT(RT_DEBUG_ERROR,
-		 ("%s : The Wireless Extension MUST be v15 or newer.\n",
-		  __FUNCTION__));
+			("%s : The Wireless Extension MUST be v15 or newer.\n",
+			__FUNCTION__));
 #endif /* WIRELESS_EXT >= 15 */
 }
 #endif /* SYSTEM_LOG_SUPPORT */
@@ -1068,11 +1072,13 @@ RTMP_OS_FD RtmpOSFileOpen(char *pPath, int flag, int mode)
 	return (RTMP_OS_FD) filePtr;
 }
 
+
 int RtmpOSFileClose(RTMP_OS_FD osfd)
 {
 	filp_close(osfd, NULL);
 	return 0;
 }
+
 
 void RtmpOSFileSeek(RTMP_OS_FD osfd, int offset)
 {
@@ -1082,19 +1088,27 @@ void RtmpOSFileSeek(RTMP_OS_FD osfd, int offset)
 
 int RtmpOSFileRead(RTMP_OS_FD osfd, char *pDataPtr, int readLen)
 {
-	/* The object must have a read method */
-	if (osfd->f_op && osfd->f_op->read) {
-		return osfd->f_op->read(osfd, pDataPtr, readLen, &osfd->f_pos);
-	} else {
-		DBGPRINT(RT_DEBUG_ERROR, ("no file read method\n"));
-		return -1;
-	}
+	int ret;
+	mm_segment_t fs = get_fs();
+
+	set_fs(get_ds());
+	ret = vfs_read(osfd, pDataPtr, readLen, &osfd->f_pos);
+	set_fs(fs);
+	return ret;
 }
+
 
 int RtmpOSFileWrite(RTMP_OS_FD osfd, char *pDataPtr, int writeLen)
 {
-	return osfd->f_op->write(osfd, pDataPtr, (size_t) writeLen, &osfd->f_pos);
+	int ret;
+	mm_segment_t oldfs = get_fs();
+
+	set_fs(get_ds());
+	ret = vfs_write(osfd, pDataPtr, writeLen, &osfd->f_pos);
+	set_fs(oldfs);
+	return ret;
 }
+
 
 static inline void __RtmpOSFSInfoChange(OS_FS_INFO * pOSFSInfo, BOOLEAN bSet)
 {

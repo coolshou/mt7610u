@@ -1,91 +1,36 @@
 /*
- *************************************************************************
+ ***************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology 5th Rd.
+ * Science-based Industrial Park
+ * Hsin-chu, Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002-2006, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved.	Ralink's source	code is	an unpublished work	and	the
+ * use of a	copyright notice does not imply	otherwise. This	source code
+ * contains	confidential trade secret material of Ralink Tech. Any attemp
+ * or participation	in deciphering,	decoding, reverse engineering or in	any
+ * way altering	the	source code	is stricitly prohibited, unless	the	prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************
 
+	Module Name:
+	auth.c
 
+	Abstract:
+
+	Revision History:
+	Who			When			What
+	--------	----------		-------------------------------------------
+*/
 #include "rt_config.h"
 
-/*
-    ==========================================================================
-    Description:
-        authenticate state machine init, including state transition and timer init
-    Parameters:
-        Sm - pointer to the auth state machine
-    Note:
-        The state machine looks like this
-        
-                        AUTH_REQ_IDLE           AUTH_WAIT_SEQ2                   AUTH_WAIT_SEQ4
-    MT2_MLME_AUTH_REQ   mlme_auth_req_action    invalid_state_when_auth          invalid_state_when_auth
-    MT2_PEER_AUTH_EVEN  drop                    peer_auth_even_at_seq2_action    peer_auth_even_at_seq4_action
-    MT2_AUTH_TIMEOUT    Drop                    auth_timeout_action              auth_timeout_action
-        
-	IRQL = PASSIVE_LEVEL
-
-    ==========================================================================
- */
-
-void AuthStateMachineInit(
-	IN PRTMP_ADAPTER pAd,
-	IN STATE_MACHINE *Sm,
-	OUT STATE_MACHINE_FUNC Trans[])
-{
-	StateMachineInit(Sm, Trans, MAX_AUTH_STATE, MAX_AUTH_MSG,
-			 (STATE_MACHINE_FUNC) Drop, AUTH_REQ_IDLE,
-			 AUTH_MACHINE_BASE);
-
-	/* the first column */
-	StateMachineSetAction(Sm, AUTH_REQ_IDLE, MT2_MLME_AUTH_REQ,
-			      (STATE_MACHINE_FUNC) MlmeAuthReqAction);
-
-	/* the second column */
-	StateMachineSetAction(Sm, AUTH_WAIT_SEQ2, MT2_MLME_AUTH_REQ,
-			      (STATE_MACHINE_FUNC) InvalidStateWhenAuth);
-	StateMachineSetAction(Sm, AUTH_WAIT_SEQ2, MT2_PEER_AUTH_EVEN,
-			      (STATE_MACHINE_FUNC) PeerAuthRspAtSeq2Action);
-	StateMachineSetAction(Sm, AUTH_WAIT_SEQ2, MT2_AUTH_TIMEOUT,
-			      (STATE_MACHINE_FUNC) AuthTimeoutAction);
-
-	/* the third column */
-	StateMachineSetAction(Sm, AUTH_WAIT_SEQ4, MT2_MLME_AUTH_REQ,
-			      (STATE_MACHINE_FUNC) InvalidStateWhenAuth);
-	StateMachineSetAction(Sm, AUTH_WAIT_SEQ4, MT2_PEER_AUTH_EVEN,
-			      (STATE_MACHINE_FUNC) PeerAuthRspAtSeq4Action);
-	StateMachineSetAction(Sm, AUTH_WAIT_SEQ4, MT2_AUTH_TIMEOUT,
-			      (STATE_MACHINE_FUNC) AuthTimeoutAction);
-
-	RTMPInitTimer(pAd, &pAd->MlmeAux.AuthTimer,
-		      GET_TIMER_FUNCTION(AuthTimeout), pAd, FALSE);
-}
 
 /*
     ==========================================================================
     Description:
         function to be executed at timer thread when auth timer expires
-        
-	IRQL = DISPATCH_LEVEL
-
     ==========================================================================
  */
 VOID AuthTimeout(
@@ -94,9 +39,9 @@ VOID AuthTimeout(
 	IN PVOID SystemSpecific2,
 	IN PVOID SystemSpecific3)
 {
-	RTMP_ADAPTER *pAd = (RTMP_ADAPTER *) FunctionContext;
+	RTMP_ADAPTER *pAd = (RTMP_ADAPTER *)FunctionContext;
 
-	DBGPRINT(RT_DEBUG_TRACE, ("AUTH - AuthTimeout\n"));
+	DBGPRINT(RT_DEBUG_TRACE, ("%s():AuthTimeout\n", __FUNCTION__));
 
 	/* Do nothing if the driver is starting halt state. */
 	/* This might happen when timer already been fired before cancel timer with mlmehalt */
@@ -111,6 +56,7 @@ VOID AuthTimeout(
 	RTMP_MLME_HANDLER(pAd);
 }
 
+
 /*
     ==========================================================================
     Description:
@@ -119,9 +65,7 @@ VOID AuthTimeout(
 
     ==========================================================================
  */
-VOID MlmeAuthReqAction(
-	IN PRTMP_ADAPTER pAd,
-	IN MLME_QUEUE_ELEM *Elem)
+VOID MlmeAuthReqAction(RTMP_ADAPTER *pAd, MLME_QUEUE_ELEM *Elem)
 {
 	if (AUTH_ReqSend(pAd, Elem, &pAd->MlmeAux.AuthTimer, "AUTH", 1, NULL, 0))
 		pAd->Mlme.AuthMachine.CurrState = AUTH_WAIT_SEQ2;
@@ -134,6 +78,7 @@ VOID MlmeAuthReqAction(
 	}
 }
 
+
 /*
     ==========================================================================
     Description:
@@ -142,54 +87,39 @@ VOID MlmeAuthReqAction(
 
     ==========================================================================
  */
-VOID PeerAuthRspAtSeq2Action(
-	IN PRTMP_ADAPTER pAd,
-	IN MLME_QUEUE_ELEM * Elem)
+VOID PeerAuthRspAtSeq2Action(RTMP_ADAPTER *pAd, MLME_QUEUE_ELEM * Elem)
 {
 	UCHAR Addr2[MAC_ADDR_LEN];
 	USHORT Seq, Status, RemoteStatus, Alg;
 	UCHAR iv_hdr[4];
-/*    UCHAR         ChlgText[CIPHER_TEXT_LEN]; */
 	UCHAR *ChlgText = NULL;
-/*    UCHAR         CyperChlgText[CIPHER_TEXT_LEN + 8 + 8]; */
 	UCHAR *CyperChlgText = NULL;
 	ULONG c_len = 0;
 	HEADER_802_11 AuthHdr;
 	BOOLEAN TimerCancelled;
 	PUCHAR pOutBuffer = NULL;
-	NDIS_STATUS NStatus;
 	ULONG FrameLen = 0;
 	USHORT Status2;
 	UCHAR ChallengeIe = IE_CHALLENGE_TEXT;
 	UCHAR len_challengeText = CIPHER_TEXT_LEN;
 
-	/* allocate memory */
-	os_alloc_mem(NULL, (UCHAR **) & ChlgText, CIPHER_TEXT_LEN);
+	ChlgText = os_alloc_mem(CIPHER_TEXT_LEN);
 	if (ChlgText == NULL) {
-		DBGPRINT(RT_DEBUG_ERROR,
-			 ("%s: ChlgText Allocate memory fail!!!\n",
-			  __FUNCTION__));
 		return;
 	}
 
-	os_alloc_mem(NULL, (UCHAR **) & CyperChlgText, CIPHER_TEXT_LEN + 8 + 8);
+	CyperChlgText = os_alloc_mem(CIPHER_TEXT_LEN + 8 + 8);
 	if (CyperChlgText == NULL) {
-		DBGPRINT(RT_DEBUG_ERROR,
-			 ("%s: CyperChlgText Allocate memory fail!!!\n",
-			  __FUNCTION__));
-		os_free_mem(NULL, ChlgText);
+		os_free_mem(ChlgText);
 		return;
 	}
 
-	if (PeerAuthSanity
-	    (pAd, Elem->Msg, Elem->MsgLen, Addr2, &Alg, &Seq, &Status,
-	     (PCHAR) ChlgText)) {
+	if (PeerAuthSanity(pAd, Elem->Msg, Elem->MsgLen, Addr2, &Alg, &Seq, &Status, (PCHAR)ChlgText)) {
 		if (MAC_ADDR_EQUAL(pAd->MlmeAux.Bssid, Addr2) && Seq == 2) {
 			DBGPRINT(RT_DEBUG_TRACE,
 				 ("AUTH - Receive AUTH_RSP seq#2 to me (Alg=%d, Status=%d)\n",
 				  Alg, Status));
-			RTMPCancelTimer(&pAd->MlmeAux.AuthTimer,
-					&TimerCancelled);
+			RTMPCancelTimer(&pAd->MlmeAux.AuthTimer, &TimerCancelled);
 
 			if (Status == MLME_SUCCESS) {
 				/* Authentication Mode "LEAP" has allow for CCX 1.X */
@@ -200,15 +130,14 @@ VOID PeerAuthRspAtSeq2Action(
 						    MT2_AUTH_CONF, 2, &Status,
 						    0);
 				} else {
+					struct wifi_dev *wdev = &pAd->StaCfg.wdev;
 					/* 2. shared key, need to be challenged */
 					Seq++;
 					RemoteStatus = MLME_SUCCESS;
 
 					/* Get an unused nonpaged memory */
-					NStatus =
-					    MlmeAllocateMemory(pAd,
-							       &pOutBuffer);
-					if (NStatus != NDIS_STATUS_SUCCESS) {
+					pOutBuffer= MlmeAllocateMemory();
+					if (!pOutBuffer) {
 						DBGPRINT(RT_DEBUG_TRACE,
 							 ("AUTH - PeerAuthRspAtSeq2Action() allocate memory fail\n"));
 						pAd->Mlme.AuthMachine.CurrState = AUTH_REQ_IDLE;
@@ -224,15 +153,16 @@ VOID PeerAuthRspAtSeq2Action(
 						 ("AUTH - Send AUTH request seq#3...\n"));
 					MgtMacHeaderInit(pAd, &AuthHdr,
 							 SUBTYPE_AUTH, 0, Addr2,
+							pAd->CurrentAddress,
 							 pAd->MlmeAux.Bssid);
 					AuthHdr.FC.Wep = 1;
 
 					/* TSC increment */
-					INC_TX_TSC(pAd->SharedKey[BSS0][pAd->StaCfg.DefaultKeyId].TxTsc, LEN_WEP_TSC);
+					INC_TX_TSC(pAd->SharedKey[BSS0][wdev->DefaultKeyId].TxTsc, LEN_WEP_TSC);
 
 					/* Construct the 4-bytes WEP IV header */
-					RTMPConstructWEPIVHdr(pAd->StaCfg.DefaultKeyId,
-							      pAd->SharedKey[BSS0][pAd->StaCfg.DefaultKeyId].TxTsc, iv_hdr);
+					RTMPConstructWEPIVHdr(wdev->DefaultKeyId,
+							      pAd->SharedKey[BSS0][wdev->DefaultKeyId].TxTsc, iv_hdr);
 
 					Alg = cpu2le16(*(USHORT *) & Alg);
 					Seq = cpu2le16(*(USHORT *) & Seq);
@@ -251,9 +181,9 @@ VOID PeerAuthRspAtSeq2Action(
 
 					if (RTMPSoftEncryptWEP(pAd,
 							       iv_hdr,
-							       &pAd->SharedKey[BSS0][pAd->StaCfg.DefaultKeyId],
+							       &pAd->SharedKey[BSS0][wdev->DefaultKeyId],
 							       CyperChlgText, c_len) == FALSE) {
-						MlmeFreeMemory(pAd, pOutBuffer);
+						MlmeFreeMemory(pOutBuffer);
 						pAd->Mlme.AuthMachine.CurrState = AUTH_REQ_IDLE;
 						Status2 = MLME_FAIL_NO_RESOURCE;
 						MlmeEnqueue(pAd,
@@ -276,7 +206,7 @@ VOID PeerAuthRspAtSeq2Action(
 							  END_OF_ARGS);
 
 					MiniportMMRequest(pAd, 0, pOutBuffer, FrameLen);
-					MlmeFreeMemory(pAd, pOutBuffer);
+					MlmeFreeMemory(pOutBuffer);
 
 					RTMPSetTimer(&pAd->MlmeAux.AuthTimer, AUTH_TIMEOUT);
 					pAd->Mlme.AuthMachine.CurrState = AUTH_WAIT_SEQ4;
@@ -296,12 +226,13 @@ VOID PeerAuthRspAtSeq2Action(
 
       LabelOK:
 	if (ChlgText != NULL)
-		os_free_mem(NULL, ChlgText);
+		os_free_mem(ChlgText);
 
 	if (CyperChlgText != NULL)
-		os_free_mem(NULL, CyperChlgText);
+		os_free_mem(CyperChlgText);
 	return;
 }
+
 
 /*
     ==========================================================================
@@ -311,22 +242,16 @@ VOID PeerAuthRspAtSeq2Action(
 
     ==========================================================================
  */
-VOID PeerAuthRspAtSeq4Action(
-	IN PRTMP_ADAPTER pAd,
-	IN MLME_QUEUE_ELEM *Elem)
+VOID PeerAuthRspAtSeq4Action(RTMP_ADAPTER *pAd, MLME_QUEUE_ELEM *Elem)
 {
 	UCHAR Addr2[MAC_ADDR_LEN];
 	USHORT Alg, Seq, Status;
-/*    CHAR          ChlgText[CIPHER_TEXT_LEN]; */
 	CHAR *ChlgText = NULL;
 	BOOLEAN TimerCancelled;
 
 	/* allocate memory */
-	os_alloc_mem(NULL, (UCHAR **) & ChlgText, CIPHER_TEXT_LEN);
+	ChlgText = os_alloc_mem(CIPHER_TEXT_LEN);
 	if (ChlgText == NULL) {
-		DBGPRINT(RT_DEBUG_ERROR,
-			 ("%s: ChlgText Allocate memory fail!!!\n",
-			  __FUNCTION__));
 		return;
 	}
 
@@ -356,7 +281,7 @@ VOID PeerAuthRspAtSeq4Action(
 	}
 
 	if (ChlgText != NULL)
-		os_free_mem(NULL, ChlgText);
+		os_free_mem(ChlgText);
 }
 
 /*
@@ -367,21 +292,18 @@ VOID PeerAuthRspAtSeq4Action(
 
     ==========================================================================
  */
-VOID MlmeDeauthReqAction(
-	IN PRTMP_ADAPTER pAd,
-	IN MLME_QUEUE_ELEM *Elem)
+VOID MlmeDeauthReqAction(RTMP_ADAPTER *pAd, MLME_QUEUE_ELEM *Elem)
 {
 	MLME_DEAUTH_REQ_STRUCT *pInfo;
 	HEADER_802_11 DeauthHdr;
 	PUCHAR pOutBuffer = NULL;
-	NDIS_STATUS NStatus;
 	ULONG FrameLen = 0;
 	USHORT Status;
 
 	pInfo = (MLME_DEAUTH_REQ_STRUCT *) Elem->Msg;
 
-	NStatus = MlmeAllocateMemory(pAd, &pOutBuffer);	/*Get an unused nonpaged memory */
-	if (NStatus != NDIS_STATUS_SUCCESS) {
+	pOutBuffer = MlmeAllocateMemory();	/*Get an unused nonpaged memory */
+	if (!pOutBuffer) {
 		DBGPRINT(RT_DEBUG_TRACE,
 			 ("AUTH - MlmeDeauthReqAction() allocate memory fail\n"));
 		pAd->Mlme.AuthMachine.CurrState = AUTH_REQ_IDLE;
@@ -395,11 +317,12 @@ VOID MlmeDeauthReqAction(
 		 ("AUTH - Send DE-AUTH request (Reason=%d)...\n",
 		  pInfo->Reason));
 	MgtMacHeaderInit(pAd, &DeauthHdr, SUBTYPE_DEAUTH, 0, pInfo->Addr,
+						pAd->CurrentAddress,
 						pAd->MlmeAux.Bssid);
 	MakeOutgoingFrame(pOutBuffer, &FrameLen, sizeof (HEADER_802_11),
 			  &DeauthHdr, 2, &pInfo->Reason, END_OF_ARGS);
 	MiniportMMRequest(pAd, 0, pOutBuffer, FrameLen);
-	MlmeFreeMemory(pAd, pOutBuffer);
+	MlmeFreeMemory(pOutBuffer);
 
 	pAd->StaCfg.DeauthReason = pInfo->Reason;
 	COPY_MAC_ADDR(pAd->StaCfg.DeauthSta, pInfo->Addr);
@@ -412,6 +335,7 @@ VOID MlmeDeauthReqAction(
 	RTMPSendWirelessEvent(pAd, IW_DEAUTH_EVENT_FLAG, NULL, BSS0, 0);
 }
 
+
 /*
     ==========================================================================
     Description:
@@ -420,9 +344,7 @@ VOID MlmeDeauthReqAction(
 
     ==========================================================================
  */
-VOID AuthTimeoutAction(
-	IN PRTMP_ADAPTER pAd,
-	IN MLME_QUEUE_ELEM *Elem)
+VOID AuthTimeoutAction(RTMP_ADAPTER *pAd, MLME_QUEUE_ELEM *Elem)
 {
 	USHORT Status;
 	DBGPRINT(RT_DEBUG_TRACE, ("AUTH - AuthTimeoutAction\n"));
@@ -431,6 +353,7 @@ VOID AuthTimeoutAction(
 	MlmeEnqueue(pAd, MLME_CNTL_STATE_MACHINE, MT2_AUTH_CONF, 2, &Status, 0);
 }
 
+
 /*
     ==========================================================================
     Description:
@@ -439,9 +362,7 @@ VOID AuthTimeoutAction(
 
     ==========================================================================
  */
-VOID InvalidStateWhenAuth(
-	IN PRTMP_ADAPTER pAd,
-	IN MLME_QUEUE_ELEM *Elem)
+VOID InvalidStateWhenAuth(RTMP_ADAPTER *pAd, MLME_QUEUE_ELEM *Elem)
 {
 	USHORT Status;
 	DBGPRINT(RT_DEBUG_TRACE,
@@ -451,6 +372,7 @@ VOID InvalidStateWhenAuth(
 	Status = MLME_STATE_MACHINE_REJECT;
 	MlmeEnqueue(pAd, MLME_CNTL_STATE_MACHINE, MT2_AUTH_CONF, 2, &Status, 0);
 }
+
 
 /*
     ==========================================================================
@@ -464,32 +386,31 @@ VOID InvalidStateWhenAuth(
 
     ==========================================================================
  */
-VOID Cls2errAction(
-	IN PRTMP_ADAPTER pAd,
-	IN PUCHAR pAddr)
+VOID Cls2errAction(RTMP_ADAPTER *pAd, UCHAR *pAddr)
 {
 	HEADER_802_11 DeauthHdr;
 	PUCHAR pOutBuffer = NULL;
-	NDIS_STATUS NStatus;
 	ULONG FrameLen = 0;
 	USHORT Reason = REASON_CLS2ERR;
 
-	NStatus = MlmeAllocateMemory(pAd, &pOutBuffer);	/*Get an unused nonpaged memory */
-	if (NStatus != NDIS_STATUS_SUCCESS)
+	pOutBuffer = MlmeAllocateMemory();	/*Get an unused nonpaged memory */
+	if (!pOutBuffer)
 		return;
 
 	DBGPRINT(RT_DEBUG_TRACE,
 		 ("AUTH - Class 2 error, Send DEAUTH frame...\n"));
 	MgtMacHeaderInit(pAd, &DeauthHdr, SUBTYPE_DEAUTH, 0, pAddr,
+						pAd->CurrentAddress,
 						pAd->MlmeAux.Bssid);
 	MakeOutgoingFrame(pOutBuffer, &FrameLen, sizeof (HEADER_802_11),
 			  &DeauthHdr, 2, &Reason, END_OF_ARGS);
 	MiniportMMRequest(pAd, 0, pOutBuffer, FrameLen);
-	MlmeFreeMemory(pAd, pOutBuffer);
+	MlmeFreeMemory(pOutBuffer);
 
 	pAd->StaCfg.DeauthReason = Reason;
 	COPY_MAC_ADDR(pAd->StaCfg.DeauthSta, pAddr);
 }
+
 
 BOOLEAN AUTH_ReqSend(
 	IN PRTMP_ADAPTER pAd,
@@ -505,7 +426,6 @@ BOOLEAN AUTH_ReqSend(
 	ULONG Timeout;
 	HEADER_802_11 AuthHdr;
 	BOOLEAN TimerCancelled;
-	NDIS_STATUS NStatus;
 	PUCHAR pOutBuffer = NULL;
 	ULONG FrameLen = 0, tmp = 0;
 
@@ -518,9 +438,9 @@ BOOLEAN AUTH_ReqSend(
 		Status = MLME_STATE_MACHINE_REJECT;
 		MlmeEnqueue(pAd, MLME_CNTL_STATE_MACHINE, MT2_AUTH_CONF, 2,
 			    &Status, 0);
-	} else
-	    if (MlmeAuthReqSanity
-		(pAd, pElem->Msg, pElem->MsgLen, Addr, &Timeout, &Alg)) {
+	}
+	else if (MlmeAuthReqSanity(pAd, pElem->Msg, pElem->MsgLen, Addr, &Timeout, &Alg))
+	{
 		/* reset timer */
 		RTMPCancelTimer(pAuthTimer, &TimerCancelled);
 
@@ -529,8 +449,8 @@ BOOLEAN AUTH_ReqSend(
 		Seq = SeqNo;
 		Status = MLME_SUCCESS;
 
-		NStatus = MlmeAllocateMemory(pAd, &pOutBuffer);	/*Get an unused nonpaged memory */
-		if (NStatus != NDIS_STATUS_SUCCESS) {
+		pOutBuffer = MlmeAllocateMemory();	/*Get an unused nonpaged memory */
+		if (!pOutBuffer) {
 			DBGPRINT(RT_DEBUG_TRACE,
 				 ("%s - MlmeAuthReqAction(Alg:%d) allocate memory failed\n",
 				  pSMName, Alg));
@@ -542,9 +462,10 @@ BOOLEAN AUTH_ReqSend(
 		}
 
 		DBGPRINT(RT_DEBUG_TRACE,
-			 ("%s - Send AUTH request seq#1 (Alg=%d)...\n", pSMName,
-			  Alg));
+			 ("%s - Send AUTH request seq#1 (Alg=%d)...\n",
+			 pSMName, Alg));
 		MgtMacHeaderInit(pAd, &AuthHdr, SUBTYPE_AUTH, 0, Addr,
+							pAd->CurrentAddress,
 							pAd->MlmeAux.Bssid);
 		MakeOutgoingFrame(pOutBuffer, &FrameLen, sizeof (HEADER_802_11),
 				  &AuthHdr, 2, &Alg, 2, &Seq, 2, &Status,
@@ -557,15 +478,68 @@ BOOLEAN AUTH_ReqSend(
 		}
 
 		MiniportMMRequest(pAd, 0, pOutBuffer, FrameLen);
-		MlmeFreeMemory(pAd, pOutBuffer);
+		MlmeFreeMemory(pOutBuffer);
 
 		RTMPSetTimer(pAuthTimer, Timeout);
 		return TRUE;
-	} else {
-		DBGPRINT_ERR(("%s - MlmeAuthReqAction() sanity check failed\n",
-			      pSMName));
+	}
+	else
+	{
+		DBGPRINT_ERR(("%s(): %s sanity check fail\n", __FUNCTION__, pSMName));
 		return FALSE;
 	}
 
 	return TRUE;
+}
+
+
+/*
+    ==========================================================================
+    Description:
+        authenticate state machine init, including state transition and timer init
+    Parameters:
+        Sm - pointer to the auth state machine
+    Note:
+        The state machine looks like this
+        
+                        AUTH_REQ_IDLE           AUTH_WAIT_SEQ2                   AUTH_WAIT_SEQ4
+    MT2_MLME_AUTH_REQ   mlme_auth_req_action    invalid_state_when_auth          invalid_state_when_auth
+    MT2_PEER_AUTH_EVEN  drop                    peer_auth_even_at_seq2_action    peer_auth_even_at_seq4_action
+    MT2_AUTH_TIMEOUT    Drop                    auth_timeout_action              auth_timeout_action
+        
+	IRQL = PASSIVE_LEVEL
+
+    ==========================================================================
+*/
+void AuthStateMachineInit(
+	IN RTMP_ADAPTER *pAd,
+	IN STATE_MACHINE *Sm,
+	OUT STATE_MACHINE_FUNC Trans[])
+{
+	StateMachineInit(Sm, Trans, MAX_AUTH_STATE, MAX_AUTH_MSG,
+			 (STATE_MACHINE_FUNC) Drop, AUTH_REQ_IDLE,
+			 AUTH_MACHINE_BASE);
+
+	/* the first column */
+	StateMachineSetAction(Sm, AUTH_REQ_IDLE, MT2_MLME_AUTH_REQ,
+			      (STATE_MACHINE_FUNC) MlmeAuthReqAction);
+
+	/* the second column */
+	StateMachineSetAction(Sm, AUTH_WAIT_SEQ2, MT2_MLME_AUTH_REQ,
+			      (STATE_MACHINE_FUNC) InvalidStateWhenAuth);
+	StateMachineSetAction(Sm, AUTH_WAIT_SEQ2, MT2_PEER_AUTH_EVEN,
+			      (STATE_MACHINE_FUNC) PeerAuthRspAtSeq2Action);
+	StateMachineSetAction(Sm, AUTH_WAIT_SEQ2, MT2_AUTH_TIMEOUT,
+			      (STATE_MACHINE_FUNC) AuthTimeoutAction);
+
+	/* the third column */
+	StateMachineSetAction(Sm, AUTH_WAIT_SEQ4, MT2_MLME_AUTH_REQ,
+			      (STATE_MACHINE_FUNC) InvalidStateWhenAuth);
+	StateMachineSetAction(Sm, AUTH_WAIT_SEQ4, MT2_PEER_AUTH_EVEN,
+			      (STATE_MACHINE_FUNC) PeerAuthRspAtSeq4Action);
+	StateMachineSetAction(Sm, AUTH_WAIT_SEQ4, MT2_AUTH_TIMEOUT,
+			      (STATE_MACHINE_FUNC) AuthTimeoutAction);
+
+	RTMPInitTimer(pAd, &pAd->MlmeAux.AuthTimer,
+		      GET_TIMER_FUNCTION(AuthTimeout), pAd, FALSE);
 }

@@ -135,7 +135,7 @@ int MainVirtualIF_close(IN struct net_device *net_dev)
 	VIRTUAL_IF_DOWN(pAd);
 #endif /* IFUP_IN_PROBE */
 
-	RT_MOD_DEC_USE_COUNT();
+	//RT_MOD_DEC_USE_COUNT();
 
 	return 0; /* close ok */
 }
@@ -183,7 +183,7 @@ int MainVirtualIF_open(IN struct net_device *net_dev)
 #endif /* IFUP_IN_PROBE */	
 
 	/* increase MODULE use count */
-	RT_MOD_INC_USE_COUNT();
+	//RT_MOD_INC_USE_COUNT();
 
 	netif_start_queue(net_dev);
 	netif_carrier_on(net_dev);

@@ -1,35 +1,41 @@
 /*
- *************************************************************************
+ ***************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology 5th Rd.
+ * Science-based Industrial Park
+ * Hsin-chu, Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002-2004, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved. Ralink's source code is an unpublished work and the
+ * use of a copyright notice does not imply otherwise. This source code
+ * contains confidential trade secret material of Ralink Tech. Any attemp
+ * or participation in deciphering, decoding, reverse engineering or in any
+ * way altering the source code is stricitly prohibited, unless the prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************
 
+	Module Name:
+	rtmp_phy.h
+
+	Abstract:
+	Ralink Wireless Chip PHY(BBP/RF) related definition & structures
+
+*/
 
 #ifndef __RTMP_PHY_H__
 #define __RTMP_PHY_H__
 
 
 #include "mac_ral/rf_ctrl.h"
+#ifdef RLT_BBP
+#include "phy/rlt_bbp.h"
+#endif
+
+#ifdef RTMP_BBP
+#include "phy/rtmp_bbp.h"
+#endif
+
 #ifdef RLT_MAC
 #include "phy/rlt_phy.h"
 #endif /* RLT_MAC */
@@ -37,113 +43,114 @@
 /*
 	RF sections
 */
-#define RF_R00			0
-#define RF_R01			1
-#define RF_R02			2
-#define RF_R03			3
-#define RF_R04			4
-#define RF_R05			5
-#define RF_R06			6
-#define RF_R07			7
-#define RF_R08			8
-#define RF_R09			9
-#define RF_R10			10
-#define RF_R11			11
-#define RF_R12			12
-#define RF_R13			13
-#define RF_R14			14
-#define RF_R15			15
-#define RF_R16			16
-#define RF_R17			17
-#define RF_R18			18
-#define RF_R19			19
-#define RF_R20			20
-#define RF_R21			21
-#define RF_R22			22
-#define RF_R23			23
-#define RF_R24			24
-#define RF_R25			25
-#define RF_R26			26
-#define RF_R27			27
-#define RF_R28			28
-#define RF_R29			29
-#define RF_R30			30
-#define RF_R31			31
-#define	RF_R32			32
-#define	RF_R33			33
-#define	RF_R34			34
-#define	RF_R35			35
-#define	RF_R36			36
-#define	RF_R37			37
-#define	RF_R38			38
-#define	RF_R39			39
-#define	RF_R40			40
-#define	RF_R41			41
-#define	RF_R42			42
-#define	RF_R43			43
-#define	RF_R44			44
-#define	RF_R45			45
-#define	RF_R46			46
-#define	RF_R47			47
-#define	RF_R48			48
-#define	RF_R49			49
-#define	RF_R50			50
-#define	RF_R51			51
-#define	RF_R52			52
-#define	RF_R53			53
-#define	RF_R54			54
-#define	RF_R55			55
-#define	RF_R56			56
-#define	RF_R57			57
-#define	RF_R58			58
-#define	RF_R59			59
-#define	RF_R60			60
-#define	RF_R61			61
-#define	RF_R62			62
-#define	RF_R63			63
-#define	RF_R64			64
-#define	RF_R65			65
-#define	RF_R66			66
-#define	RF_R67			67
-#define	RF_R68			68
-#define	RF_R69			69
-#define	RF_R70			70
-#define	RF_R71			71
-#define	RF_R72			72
-#define	RF_R73			73
-#define	RF_R74			74
-#define	RF_R75			75
-#define	RF_R76			76
-#define	RF_R77			77
-#define	RF_R78			78
-#define	RF_R79			79
-#define	RF_R126			126
-#define	RF_R127			127
-
+#define RF_R00		0
+#define RF_R01		1
+#define RF_R02		2
+#define RF_R03		3
+#define RF_R04		4
+#define RF_R05		5
+#define RF_R06		6
+#define RF_R07		7
+#define RF_R08		8
+#define RF_R09		9
+#define RF_R10		10
+#define RF_R11		11
+#define RF_R12		12
+#define RF_R13		13
+#define RF_R14		14
+#define RF_R15		15
+#define RF_R16		16
+#define RF_R17		17
+#define RF_R18		18
+#define RF_R19		19
+#define RF_R20		20
+#define RF_R21		21
+#define RF_R22		22
+#define RF_R23		23
+#define RF_R24		24
+#define RF_R25		25
+#define RF_R26		26
+#define RF_R27		27
+#define RF_R28		28
+#define RF_R29		29
+#define RF_R30		30
+#define RF_R31		31
+#define RF_R32		32
+#define RF_R33		33
+#define RF_R34		34
+#define RF_R35		35
+#define RF_R36		36
+#define RF_R37		37
+#define RF_R38		38
+#define RF_R39		39
+#define RF_R40		40
+#define RF_R41		41
+#define RF_R42		42
+#define RF_R43		43
+#define RF_R44		44
+#define RF_R45		45
+#define RF_R46		46
+#define RF_R47		47
+#define RF_R48		48
+#define RF_R49		49
+#define RF_R50		50
+#define RF_R51		51
+#define RF_R52		52
+#define RF_R53		53
+#define RF_R54		54
+#define RF_R55		55
+#define RF_R56		56
+#define RF_R57		57
+#define RF_R58		58
+#define RF_R59		59
+#define RF_R60		60
+#define RF_R61		61
+#define RF_R62		62
+#define RF_R63		63
+#define RF_R64		64
+#define RF_R65		65
+#define RF_R66		66
+#define RF_R67		67
+#define RF_R68		68
+#define RF_R69		69
+#define RF_R70		70
+#define RF_R71		71
+#define RF_R72		72
+#define RF_R73		73
+#define RF_R74		74
+#define RF_R75		75
+#define RF_R76		76
+#define RF_R77		77
+#define RF_R78		78
+#define RF_R79		79
+#define RF_R126		126
+#define RF_R127		127
 
 /* value domain of pAd->RfIcType */
-#define RFIC_2820                   1       /* 2.4G 2T3R */
-#define RFIC_2850                   2       /* 2.4G/5G 2T3R */
-#define RFIC_2720                   3       /* 2.4G 1T2R */
-#define RFIC_2750                   4       /* 2.4G/5G 1T2R */
-#define RFIC_3020                   5       /* 2.4G 1T1R */
-#define RFIC_2020                   6       /* 2.4G B/G */
-#define RFIC_3021                   7       /* 2.4G 1T2R */
-#define RFIC_3022                   8       /* 2.4G 2T2R */
-#define RFIC_3052                   9       /* 2.4G/5G 2T2R */
-#define RFIC_2853					10		/* 2.4G.5G 3T3R */
-#define RFIC_3320                   11      /* 2.4G 1T1R with PA (RT3350/RT3370/RT3390) */
-#define RFIC_3322                   12      /* 2.4G 2T2R with PA (RT3352/RT3371/RT3372/RT3391/RT3392) */
-#define RFIC_3053                   13      /* 2.4G/5G 3T3R (RT3883/RT3563/RT3573/RT3593/RT3662) */
-#define RFIC_3853                   13      /* 2.4G/5G 3T3R (RT3883/RT3563/RT3573/RT3593/RT3662) */
-#define RFIC_5592					14		/* 2.4G/5G */
-#define RFIC_7650					15		/* 2.4G/5G 1x1 VHT with BT*/
-#define RFIC_7610E					16		/* 5G 1x1 VHT */
-#define RFIC_7610U					17
-#define RFIC_7630					18		/* 2.4G 1x1 HT with BT */
-#define RFIC_7662					19		/* 2.4G/5G 2T2R VHT with BT */
-#define RFIC_7612					20		/* 2.4G/5G 2T2R VHT */
-#define RFIC_UNKNOWN				0xff
+#define RFIC_2820	1	/* 2.4G 2T3R */
+#define RFIC_2850	2	/* 2.4G/5G 2T3R */
+#define RFIC_2720	3	/* 2.4G 1T2R */
+#define RFIC_2750	4	/* 2.4G/5G 1T2R */
+#define RFIC_3020	5	/* 2.4G 1T1R */
+#define RFIC_2020	6	/* 2.4G B/G */
+#define RFIC_3021	7	/* 2.4G 1T2R */
+#define RFIC_3022	8	/* 2.4G 2T2R */
+#define RFIC_3052	9	/* 2.4G/5G 2T2R */
+#define RFIC_2853	10	/* 2.4G.5G 3T3R */
+#define RFIC_3320	11	/* 2.4G 1T1R with PA (RT3350/RT3370/RT3390) */
+#define RFIC_3322	12	/* 2.4G 2T2R with PA (RT3352/RT3371/RT3372/RT3391/RT3392) */
+#define RFIC_3053	13	/* 2.4G/5G 3T3R (RT3883/RT3563/RT3573/RT3593/RT3662) */
+#define RFIC_3853	13	/* 2.4G/5G 3T3R (RT3883/RT3563/RT3573/RT3593/RT3662) */
+#define RFIC_5592	14	/* 2.4G/5G */
+#define RFIC_6352	15	/* 2.4G 2T2R */
+#define RFIC_7650	15	/* 2.4G/5G 1x1 VHT with BT*/
+#define RFIC_7610E	16	/* 5G 1x1 VHT */
+#define RFIC_7610U	17
+#define RFIC_7630	18	/* 2.4G 1x1 HT with BT */
+#define RFIC_7662	19	/* 2.4G/5G 2T2R VHT with BT */
+#define RFIC_7612	20	/* 2.4G/5G 2T2R VHT */
+#define RFIC_7602	21	/* 2.4G 2T2R VHT */
+#define RFIC_UNKNOWN	0xff
 
 #define RFIC_IS_5G_BAND(__pAd)			\
 	((__pAd->RfIcType == RFIC_2850) ||	\
@@ -299,12 +306,12 @@
 
 #define BBPR94_DEFAULT	0x06 /* Add 1 value will gain 1db */
 
-typedef enum{
+typedef enum {
 	RX_CHAIN_0 = 1<<0,
 	RX_CHAIN_1 = 1<<1,
 	RX_CHAIN_2 = 1<<2,
 	RX_CHAIN_ALL = 0xf
-}RX_CHAIN_IDX;
+} RX_CHAIN_IDX;
 
 #ifdef RT_BIG_ENDIAN
 typedef union _BBP_R47_STRUC {
@@ -341,25 +348,25 @@ typedef union _BBP_R47_STRUC {
 typedef union _BBP_R49_STRUC {
 	struct
 	{
-		UCHAR	adc5_in_sel:1; /* 0: TSSI (from the external components, old version), 1: PSI (internal components, new version - RT3390) */
-		UCHAR	bypassTSSIAverage:1; /* 0: the average TSSI (the average of the 16 samples), 1: the current TSSI */
-		UCHAR	Reserved:1; /* Reserved field */
-		UCHAR	TSSI:5; /* TSSI value */
+		UCHAR adc5_in_sel:1; /* 0: TSSI (from the external components, old version), 1: PSI (internal components, new version - RT3390) */
+		UCHAR bypassTSSIAverage:1; /* 0: the average TSSI (the average of the 16 samples), 1: the current TSSI */
+		UCHAR Reserved:1; /* Reserved field */
+		UCHAR TSSI:5; /* TSSI value */
 	} field;
 
-	UCHAR		byte;
+	UCHAR byte;
 } BBP_R49_STRUC, *PBBP_R49_STRUC;
 #else
 typedef union _BBP_R49_STRUC {
 	struct
 	{
-		UCHAR	TSSI:5; /* TSSI value */
-		UCHAR	Reserved:1; /* Reserved field */
-		UCHAR	bypassTSSIAverage:1; /* 0: the average TSSI (the average of the 16 samples), 1: the current TSSI */
-		UCHAR	adc5_in_sel:1; /* 0: TSSI (from the external components, old version), 1: PSI (internal components, new version - RT3390) */
+		UCHAR TSSI:5; /* TSSI value */
+		UCHAR Reserved:1; /* Reserved field */
+		UCHAR bypassTSSIAverage:1; /* 0: the average TSSI (the average of the 16 samples), 1: the current TSSI */
+		UCHAR adc5_in_sel:1; /* 0: TSSI (from the external components, old version), 1: PSI (internal components, new version - RT3390) */
 	} field;
 	
-	UCHAR		byte;
+	UCHAR byte;
 } BBP_R49_STRUC, *PBBP_R49_STRUC;
 #endif
 
@@ -551,7 +558,7 @@ typedef union _BBP_R182_STRUC {
 	#define MAX_BBP_ID	136
 #endif /* RT30xx */
 
-	#define MAX_BBP_MSG_SIZE	2048
+#define MAX_BBP_MSG_SIZE	2048
 
 
 
@@ -560,7 +567,7 @@ typedef union _BBP_R182_STRUC {
 /* BBP & RF are using indirect access. Before write any value into it. */
 /* We have to make sure there is no outstanding command pending via checking busy bit. */
 /* */
-#define MAX_BUSY_COUNT  100         /* Number of retry before failing access BBP & RF indirect register */
+#define MAX_BUSY_COUNT		100	/* Number of retry before failing access BBP & RF indirect register */
 
 /*#define PHY_TR_SWITCH_TIME          5  // usec */
 
@@ -578,7 +585,7 @@ typedef union _BBP_R182_STRUC {
  *****************************************************************************/
 
 #ifdef RTMP_MAC_USB
-#define RTMP_RF_IO_WRITE32(_A, _V)                 RTUSBWriteRFRegister(_A, _V)
+#define RTMP_RF_IO_WRITE32(_A, _V)	RTUSBWriteRFRegister(_A, _V)
 #endif /* RTMP_MAC_USB */
 
 
@@ -617,14 +624,26 @@ typedef union _BBP_R182_STRUC {
 #endif /*DFS_SUPPORT*/
 
 #ifdef RTMP_MAC_USB
-#define RTMP_BBP_IO_READ8_BY_REG_ID(_A, _I, _pV)   RTUSBReadBBPRegister(_A, _I, _pV)
-#define RTMP_BBP_IO_WRITE8_BY_REG_ID(_A, _I, _V)   RTUSBWriteBBPRegister(_A, _I, _V)
+//#define RTMP_BBP_IO_READ8_BY_REG_ID(_A, _I, _pV)   RTUSBReadBBPRegister(_A, _I, _pV)
+//#define RTMP_BBP_IO_WRITE8_BY_REG_ID(_A, _I, _V)   RTUSBWriteBBPRegister(_A, _I, _V)
 #define BBP_IO_WRITE8_BY_REG_ID(_A, _I, _V)			RTUSBWriteBBPRegister(_A, _I, _V)
 #define BBP_IO_READ8_BY_REG_ID(_A, _I, _pV)   		RTUSBReadBBPRegister(_A, _I, _pV)
 #endif /* RTMP_MAC_USB */
 
 
 
+BOOLEAN bbp_set_bw(struct _RTMP_ADAPTER *pAd, UINT8 bw);
+BOOLEAN bbp_set_ctrlch(struct _RTMP_ADAPTER *pAd, UINT8 ext_ch);
+BOOLEAN bbp_set_rxpath(struct _RTMP_ADAPTER *pAd, int rxpath);
+BOOLEAN bbp_get_temp(struct _RTMP_ADAPTER *pAd, CHAR *temp_val);
+BOOLEAN bbp_tx_comp_init(struct _RTMP_ADAPTER *pAd, int adc_insel, int tssi_mode);
+BOOLEAN bbp_set_txdac(struct _RTMP_ADAPTER *pAd, int tx_dac);
+BOOLEAN bbp_set_mmps(struct _RTMP_ADAPTER *pAd, BOOLEAN ReduceCorePower);
+BOOLEAN bbp_is_ready(struct _RTMP_ADAPTER *pAd);
+BOOLEAN bbp_set_agc(struct _RTMP_ADAPTER *pAd, UCHAR agc, RX_CHAIN_IDX idx);
+BOOLEAN bbp_get_agc(struct _RTMP_ADAPTER *pAd, CHAR *agc, RX_CHAIN_IDX idx);
+BOOLEAN filter_coefficient_ctrl(struct _RTMP_ADAPTER *pAd, UCHAR Channel);
+UCHAR get_random_seed_by_phy(struct _RTMP_ADAPTER *pAd);
 
 struct _RMTP_ADAPTER;
 
@@ -642,6 +661,23 @@ INT rtmp_bbp_set_filter_coefficient_ctrl(struct _RTMP_ADAPTER *pAd, UCHAR Channe
 UCHAR rtmp_bbp_get_random_seed(struct _RTMP_ADAPTER *pAd);
 
 NDIS_STATUS NICInitBBP(struct _RTMP_ADAPTER *pAd);
+
+typedef struct phy_ops{
+	int (*bbp_is_ready)(struct _RTMP_ADAPTER *pAd);
+	UCHAR (*get_random_seed_by_phy)(struct _RTMP_ADAPTER *pAd);
+	int (*filter_coefficient_ctrl)(struct _RTMP_ADAPTER *pAd, UCHAR Channel);
+	int (*bbp_set_agc)(struct _RTMP_ADAPTER *pAd, UCHAR agc, RX_CHAIN_IDX chain);
+	int (*bbp_get_agc)(struct _RTMP_ADAPTER *pAd, CHAR *agc, RX_CHAIN_IDX chain);
+	int (*bbp_set_mmps)(struct _RTMP_ADAPTER *pAd, BOOLEAN ReduceCorePower);
+	int (*bbp_set_bw)(struct _RTMP_ADAPTER *pAd, UINT8 bw);
+	int (*bbp_set_ctrlch)(struct _RTMP_ADAPTER *pAd, UINT8 ext_ch);
+	int (*bbp_set_rxpath)(struct _RTMP_ADAPTER *pAd, int rxpath);
+	int (*bbp_set_txdac)(struct _RTMP_ADAPTER *pAd, int tx_dac);
+	int (*bbp_tx_comp_init)(struct _RTMP_ADAPTER *pAd, int adc_insel, int tssi_mode);
+	int (*bbp_get_temp)(struct _RTMP_ADAPTER *pAd, CHAR *temp_val);
+	int (*bbp_init)(struct _RTMP_ADAPTER *pAd);
+}PHY_OPS;
+
 
 #endif /* __RTMP_PHY_H__ */
 

@@ -1,29 +1,29 @@
-/*
- *************************************************************************
+/****************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology 5th Rd.
+ * Science-based Industrial Park
+ * Hsin-chu, Taiwan, R.O.C.
+ * (c) Copyright 2002, Ralink Technology, Inc.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
- *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved. Ralink's source code is an unpublished work and the
+ * use of a copyright notice does not imply otherwise. This source code
+ * contains confidential trade secret material of Ralink Tech. Any attemp
+ * or participation in deciphering, decoding, reverse engineering or in any
+ * way altering the source code is stricitly prohibited, unless the prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ****************************************************************************
 
+    Module Name:
+    dot11ac_vht.h
+ 
+    Abstract:
+	Defined IE/frame structures of 802.11ac (D1.2).
+ 
+    Revision History:
+    Who        When          What
+    ---------  ----------    ----------------------------------------------
+    Shiang Tu  01-11-2012    created for 11ac
+ */
 
 #ifdef DOT11_VHT_AC
 
@@ -32,10 +32,75 @@
 #define __DOT11AC_VHT_H
 
 #include "rtmp_type.h"
-
+#include "dot11_base.h"
 
 #define IE_VHT_CAP		191
 #define IE_VHT_OP		192
+#define IE_EXT_BSS_LOAD			193
+#define IE_WIDE_BW_CH_SWITCH		194
+#define IE_VHT_TXPWR_ENV			195
+#define IE_CH_SWITCH_WRAPPER		196
+#define IE_AID						197
+#define IE_QUIET_CHANNEL			198
+
+
+#define BW_SIGNALING_DISABLE	0
+#define BW_SIGNALING_STATIC	1
+#define BW_SIGNALING_DYNAMIC	2
+
+/*
+	IEEE 802.11AC D3.0 sec 8.4.1.50
+	Operating Mode field
+
+	ch_width: Channel width
+		->	0: 20MHz
+			1: 40MHz
+			2: 80MHz
+			3: 160 or 80+80MHz
+			Reserved if Rx Nss subfield is 1
+	rx_nss: Rx Nss
+		If the Rx Nss Type subfield is 0, indicate the max number of SS STA can rx.
+		If the Rx Nss Type subfield is 1, indicate the max number of SS that the STA can receive as a
+			beamformee in a SU PPDU using a beamforming steering matrix derived from a VHT 
+			compressed beamforming report with Feedback Type subfield indicating MU in the VHT
+			Compressed Beamforming frames
+		->	0: Nss=1
+			1: Nss=2
+			...
+			7: Nss=8
+
+	rx_nss_type: 
+		->	0: indicate the rx_nss subfield carries the max number of SS that the STA can receive
+			1: indicate the rx_nss subfield carries the max number of SS that the STA can receive
+				as an SU PPDU using a beamforming steering matrix derived from a VHT compressed
+				Beamforming frame with the Feedback Type subfield indicating MU in the VHT compressed
+				Beamforming frames.
+*/
+typedef struct GNU_PACKED _OPERATING_MODE{
+#ifdef RT_BIG_ENDIAN
+	UCHAR rx_nss_type:1;
+	UCHAR rx_nss:3;
+	UCHAR rsv2:2;
+	UCHAR ch_width:2;
+#else
+	UCHAR ch_width:2;
+	UCHAR rsv2:2;
+	UCHAR rx_nss:3;
+	UCHAR rx_nss_type:1;
+#endif /* RT_BIG_ENDIAN */
+}OPERATING_MODE;
+
+
+/*
+	IEEE 802.11AC D3.0 sec 8.4.2.168
+	Operating Mode Notification element
+
+	Element ID: 199 (IE_OPERATING_MODE_NOTIFY)
+	Length: 1
+*/
+typedef struct GNU_PACKED _OPERATING_MODE_NOTIFICATION{
+	OPERATING_MODE operating_mode;
+}OPERATING_MODE_NOTIFICATION;
 
 
 /*
@@ -392,13 +457,37 @@ typedef struct GNU_PACKED _WIDE_BW_CH_SWITCH_IE{
 /*
 	IEEE 802.11AC D2.0, sec 8.4.2.164
 	VHT Transmit Power Envelope element
-
-	
 */
 typedef struct GNU_PACKED _CH_SEG_PAIR{
 	UINT8 ch_center_freq;
 	UINT8 seg_ch_width;
 }CH_SEG_PAIR;
+
+
+/*
+	max_tx_pwr_cnt:
+		0: Local Maximum Transmit Power For 20 MHz.
+		1: Local Maximum Transmit Power For 20, 40MHz
+		2: Local Maximum Transmit Power For 20, 40, 80MHz
+		3: Local Maximum Transmit Power For 20, 40, 80, 160/80+80MHz
+		4~7: rsv
+	
+	max_tx_pwr_interpretation:
+		0: EIRP
+		1~7: rsv
+*/
+#define TX_PWR_INTERPRET_EIRP		0
+typedef struct GNU_PACKED _VHT_TX_PWR_INFO_{
+#ifdef RT_BIG_ENDIAN
+	UINT8 rsv6:2;
+	UINT8 max_tx_pwr_interpretation:3;
+	UINT8 max_tx_pwr_cnt: 3;
+#else
+	UINT8 max_tx_pwr_cnt: 3;
+	UINT8 max_tx_pwr_interpretation:3;
+	UINT8 rsv6:2;
+#endif
+}VHT_TX_PWR_INFO;
 
 
 /*
@@ -463,6 +552,96 @@ typedef struct  GNU_PACKED _VHT_CONTROL{
 }VHT_CONTROL;
 
 
+/*
+	802.11 AC Draft3.1 - Section 8.3.1.19, Figure 8-29j
+
+	token_num: Sounding Dialog Token Number
+			Contains a value selected by the beamformer to identify the VHT NDP
+			Announcment frame.
+*/
+typedef struct GNU_PACKED _SNDING_DIALOG_TOKEN {
+#ifdef RT_BIG_ENDIAN
+	UINT8 token_num:6;
+	UINT8 rsv:2;
+#else
+	UINT8 rsv:2;
+	UINT8 token_num:6;
+#endif /* RT_BIG_ENDIAN */
+}SNDING_DIALOG_TOKEN;
+
+
+/*
+	802.11 AC Draft3.1 - Section 8.3.1.19, Figure 8-29k
+
+	aid12: AID12
+			the 12 least significiant bits of the AID of a STA expected to
+			process the following VHT NDP and prepare the sounding
+			feedback. Equal to 0 if the STA is the AP, mesh STA or STA
+			that is a member of an IBSS
+	fb_type: Feedback Type
+			Indicates the type of feedback requested
+			0: SU, 1: MU
+	nc_idx: Nc_Index
+			If the fb_type field indicates MU, then Nc Index indicates the 
+				number of columns, Nc, in the compressed Beamforming 
+				Feedback Matrix subfield minus one:
+					Set to 0 to request Nc=1,
+					Set to 1 to request Nc=2,
+					...
+					Set to 7 to request Nc=8,
+			Reserved if the Feedback Type Field indicates SU.
+*/
+typedef enum _SNDING_FB_TYPE{
+	SNDING_FB_SU = 0,
+	SNDING_FB_MU = 1,
+}SNDING_FB_TYPE;
+
+typedef struct GNU_PACKED _SNDING_STA_INFO {
+#ifdef RT_BIG_ENDIAN
+	UINT16 nc_idx:3;
+	UINT16 fb_type:1;
+	UINT16 aid12:12;
+#else
+	UINT16 aid12:12;
+	UINT16 fb_type:1;
+	UINT16 nc_idx:3;
+#endif /* RT_BIG_ENDIAN */
+}SNDING_STA_INFO;
+
+
+/*
+	802.11 AC Draft3.1 - Section 8.3.1.19, Figure 8-29i
+
+	VHT NDP Announcment frame format
+
+	fc: Frame Control
+
+	duration: Duration
+
+	ra: RA
+		If the VHT NDPA frame contains only one STA Info field
+			=> the RA field is set to the address of the STA 
+			identified by the AID in the STA info field.
+		If the VHT NDPA frame contains more than one STA Info field,
+			=> the RA field is set to the broadcast address.
+	ta: TA
+		The address of the STA transmitting the VHT NDPA frame.
+
+	token: Sounding Dialog Token, refer to "SNDING_DIALOG_TOKEN"
+
+	sta_info: STA Info 1, ..., STA Info n, refer to "SNDING_STA_INFO"
+		The VHT NDPA frame contains at least one STA Info field.
+	
+*/
+typedef struct GNU_PACKED _VHT_NDPA_FRAME {
+	FRAME_CONTROL fc;
+	USHORT duration;
+	UCHAR ra[MAC_ADDR_LEN];
+	UCHAR ta[MAC_ADDR_LEN];
+	SNDING_DIALOG_TOKEN token;
+	SNDING_STA_INFO sta_info[0];
+} VHT_NDPA_FRAME;
+
 typedef struct GNU_PACKED _NDPA_PKT{
 	USHORT frm_ctrl;
 	USHORT duration;
@@ -471,8 +650,20 @@ typedef struct GNU_PACKED _NDPA_PKT{
 	UINT8 snd_seq;
 }DNPA_PKT;
 
+typedef struct GNU_PACKED _PLCP_SERVICE_FIELD{
+#ifdef RT_BIG_ENDIAN
+	UINT8 rsv7:1;
+	UINT8 cbw_in_non_ht:2;
+	UINT8 dyn_bw:1;
+	UINT8 rsv03:4;
+#else
+	UINT8 rsv03:4;
+	UINT8 dyn_bw:1;
+	UINT8 cbw_in_non_ht:2;
+	UINT8 rsv7:1;
+#endif /* RT_BIG_ENDIAN */
+}PLCP_SERVICE_FIELD;
 
-	
 #endif /* __DOT11AC_VHT_H */
 
 #endif /* DOT11_VHT_AC */

@@ -1,29 +1,30 @@
 /*
- *************************************************************************
+ ***************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology 5th Rd.
+ * Science-based Industrial Park
+ * Hsin-chu, Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002-2004, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved. Ralink's source code is an unpublished work and the
+ * use of a copyright notice does not imply otherwise. This source code
+ * contains confidential trade secret material of Ralink Tech. Any attemp
+ * or participation in deciphering, decoding, reverse engineering or in any
+ * way altering the source code is stricitly prohibited, unless the prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************
 
+	Module Name:
+	mcu.h
+
+	Abstract:
+	MCU related information
+
+	Revision History:
+	Who         When          What
+	--------    ----------    ----------------------------------------------
+*/
 
 #ifndef __MCU_H__
 #define __MCU_H__
@@ -45,10 +46,20 @@ enum PWR_OP {
 	RADIO_ON_ADVANCE,
 };
 
+/*
+ *  Load code method
+ */
+enum LOAD_CODE_METHOD {
+	HEADER_METHOD,
+	BIN_FILE_METHOD,
+};
+
 struct _RTMP_ADAPTER;
 
 VOID ChipOpsMCUHook(struct _RTMP_ADAPTER *pAd, enum MCU_TYPE MCUType);
 VOID MCUCtrlInit(struct _RTMP_ADAPTER *pAd);
 VOID MCUCtrlExit(struct _RTMP_ADAPTER *pAd);
+
+INT mcu_sys_init(struct _RTMP_ADAPTER *pAd);
 
 #endif 

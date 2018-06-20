@@ -1,30 +1,32 @@
 /*
- *************************************************************************
+ ***************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology 5th Rd.
+ * Science-based Industrial Park
+ * Hsin-chu, Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002-2004, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved. Ralink's source code is an unpublished work and the
+ * use of a copyright notice does not imply otherwise. This source code
+ * contains confidential trade secret material of Ralink Tech. Any attemp
+ * or participation in deciphering, decoding, reverse engineering or in any
+ * way altering the source code is stricitly prohibited, unless the prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************
 
+    Module Name:
+    rtmp_def.h
 
+    Abstract:
+    Miniport related definition header
+
+    Revision History:
+    Who         When          What
+    --------    ----------    ----------------------------------------------
+    Paul Lin    08-01-2002    created
+    John Chang  08-05-2003    add definition for 11g & other drafts
+*/
 #ifndef __RTMP_DEF_H__
 #define __RTMP_DEF_H__
 
@@ -217,6 +219,30 @@ enum PHY_CAP{
 	fPHY_CAP_VHT = 0x20,
 
 	fPHY_CAP_TXBF = 0x100,
+	fPHY_CAP_LDPC = 0x200,
+};
+
+enum HIF_TYPE{
+	HIF_RTMP = 0x0,
+	HIF_RLT = 0x1,
+	HIF_MT = 0x2,
+};
+
+enum MAC_TYPE{
+	MAC_RTMP = 0x0,
+	MAC_MT = 0x1,
+};
+
+enum RF_TYPE {
+	RF_RT,
+	RF_RLT,
+	RF_MT,
+};
+
+enum BBP_TYPE{
+	BBP_RTMP = 0x0,
+	BBP_RLT = 0x1,
+	BBP_MT = 0x2,
 };
 
 #define PHY_CAP_2G(_x)		(((_x) & fPHY_CAP_24G) == fPHY_CAP_24G)
@@ -276,7 +302,6 @@ enum WIFI_MODE{
 
 #define fOP_AP_STATUS_MEDIA_STATE_CONNECTED	0x00200000
 
-
 /*
 	RTMP_ADAPTER PSFlags : related to advanced power save
 */
@@ -300,7 +325,6 @@ enum WIFI_MODE{
 #ifdef DOT11N_DRAFT3
 #define fOP_STATUS_SCAN_2040               	    0x00040000
 #endif /* DOT11N_DRAFT3 */
-
 
 #define CCKSETPROTECT		0x1
 #define OFDMSETPROTECT		0x2
@@ -330,6 +354,10 @@ enum WIFI_MODE{
 #define fCLIENT_STATUS_BSSCOEXIST_CAPABLE	0x00001000
 #endif /* DOT11N_DRAFT3 */
 #define fCLIENT_STATUS_SOFTWARE_ENCRYPT		0x00002000	/* Indicate the client encrypt/decrypt by software */
+#ifdef DOT11W_PMF_SUPPORT
+#define fCLIENT_STATUS_PMF_CAPABLE			0x00004000
+#define fCLIENT_STATUS_USE_SHA256				0x00008000
+#endif /* DOT11W_PMF_SUPPORT */
 
 #ifdef DOT11_VHT_AC
 #define fCLIENT_STATUS_SGI80_CAPABLE			0x00010000
@@ -345,6 +373,9 @@ enum WIFI_MODE{
 #endif /* CLIENT_WDS */
 
 
+#define fCLIENT_STATUS_VHT_RX_LDPC_CAPABLE		0x00800000
+#define fCLIENT_STATUS_HT_RX_LDPC_CAPABLE		0x01000000
+#define fCLIENT_STATUS_2G_256QAM_CAPABLE		0x02000000	/* CLIENT support 2.4G 256QAM */
 /*
 	STA configuration flags
 */
@@ -407,7 +438,7 @@ enum WIFI_MODE{
 #define ERRLOG_NO_MEMORY_RESOURCE       0x00000605L
 
 /* WDS definition */
-#define	MAX_WDS_ENTRY               4
+#define MAX_WDS_ENTRY               4
 #define WDS_PAIRWISE_KEY_OFFSET     60	/* WDS links uses pairwise key#60 ~ 63 in ASIC pairwise key table */
 
 #define	WDS_DISABLE_MODE            0
@@ -422,11 +453,21 @@ enum WIFI_MODE{
 #ifdef APCLI_SUPPORT
 #undef	MAX_APCLI_NUM
 #define MAX_APCLI_NUM				1
+#ifdef APCLI_CONNECTION_TRIAL
+#undef	MAX_APCLI_NUM
+#define MAX_APCLI_NUM				2
+#endif /* APCLI_CONNECTION_TRIAL */
 #endif /* APCLI_SUPPORT */
 
 #define MAX_P2P_NUM				0
 
 #define MAX_MBSSID_NUM(__pAd)		1
+
+#ifdef MAC_APCLI_SUPPORT
+#define APCLI_BSS_BASE				8
+#else
+#define APCLI_BSS_BASE				0
+#endif /* MAC_APCLI_SUPPORT */
 
 
 #ifdef MBSS_SUPPORT
@@ -535,6 +576,10 @@ enum WIFI_MODE{
 
 #define MAX_LEN_OF_MAC_TABLE            MAX_NUMBER_OF_MAC	/* if MAX_MBSSID_NUM is 8, this value can't be larger than 211 */
 
+#define MAX_LEN_OF_TR_TABLE 	(MAX_LEN_OF_MAC_TABLE + HW_BEACON_MAX_NUM)
+
+#define VALID_TR_WCID(_wcid)		((_wcid) < MAX_LEN_OF_TR_TABLE)
+
 /*#if MAX_LEN_OF_MAC_TABLE>MAX_AVAILABLE_CLIENT_WCID */
 /*#error MAX_LEN_OF_MAC_TABLE can not be larger than MAX_AVAILABLE_CLIENT_WCID!!!! */
 /*#endif */
@@ -544,10 +589,14 @@ enum WIFI_MODE{
 #define MAX_NUM_OF_EVENT                MAX_NUMBER_OF_EVENT
 #define WDS_LINK_START_WCID				(MAX_LEN_OF_MAC_TABLE-1)
 
+#define NUM_OF_SWFB			10
+
 #define NUM_OF_TID			8
 #define MAX_AID_BA                    4
+
 #define MAX_LEN_OF_BA_REC_TABLE          ((NUM_OF_TID * MAX_LEN_OF_MAC_TABLE)/2)	/*   (NUM_OF_TID*MAX_AID_BA + 32)        //Block ACK recipient */
 #define MAX_LEN_OF_BA_ORI_TABLE          ((NUM_OF_TID * MAX_LEN_OF_MAC_TABLE)/2)	/*   (NUM_OF_TID*MAX_AID_BA + 32)   // Block ACK originator */
+
 #ifdef MEMORY_OPTIMIZATION
 #define MAX_LEN_OF_BSS_TABLE             1
 #define MAX_REORDERING_MPDU_NUM			 256
@@ -574,8 +623,11 @@ enum WIFI_MODE{
 /*#define PWR_UNKNOWN                   2 */
 
 /* Auth and Assoc mode related definitions */
-#define AUTH_MODE_OPEN                  0x00
-#define AUTH_MODE_KEY                   0x01
+#define AUTH_MODE_OPEN		0x00
+#define AUTH_MODE_KEY			0x01
+#define AUTH_MODE_FT			0x02
+#define AUTH_MODE_SAE			0x03
+#define AUTH_MODE_VENDOR		0xffff
 /*#define AUTH_MODE_AUTO_SWITCH         0x03 */
 /*#define AUTH_MODE_DEAUTH              0x04 */
 /*#define AUTH_MODE_UPLAYER             0x05 // reserved for 802.11i use */
@@ -627,6 +679,7 @@ enum WIFI_MODE{
 /* Status code definitions */
 #define MLME_SUCCESS                    0
 #define MLME_UNSPECIFY_FAIL             1
+#define MLME_SECURITY_WEAK              5
 #define MLME_CANNOT_SUPPORT_CAP         10
 #define MLME_REASSOC_DENY_ASSOC_EXIST   11
 #define MLME_ASSOC_DENY_OUT_SCOPE       12
@@ -641,6 +694,10 @@ enum WIFI_MODE{
 #define MLME_ASSOC_REJ_NO_EXT_RATE_PBCC   23
 #define MLME_ASSOC_REJ_NO_CCK_OFDM        24
 
+#ifdef DOT11W_PMF_SUPPORT
+#define MLME_ASSOC_REJ_TEMPORARILY		  30
+#define MLME_ROBUST_MGMT_POLICY_VIOLATION 31
+#endif /* DOT11W_PMF_SUPPORT */
 
 #define MLME_QOS_UNSPECIFY                32
 #define MLME_REQUEST_DECLINED             37
@@ -707,6 +764,7 @@ enum WIFI_MODE{
 /*#define IE_NEW_EXT_CHA_OFFSET             62    // 802.11n d1. New extension channel offset elemet */
 #define IE_SECONDARY_CH_OFFSET		62	/* 802.11n D3.03        Secondary Channel Offset element */
 #define IE_WAPI							68	/* WAPI information element. Same as Bss Ac Access Dealy Element. */
+#define IE_TIME_ADVERTISEMENT			69	  // 802.11p
 #define IE_2040_BSS_COEXIST               72	/* 802.11n D3.0.3 */
 #define IE_2040_BSS_INTOLERANT_REPORT     73	/* 802.11n D3.03 */
 #define IE_OVERLAPBSS_SCAN_PARM           74	/* 802.11n D3.03 */
@@ -717,11 +775,14 @@ enum WIFI_MODE{
 #define IE_QOS_MAP_SET			110 /* 802.11u */
 #define IE_ROAMING_CONSORTIUM	111 /* 802.11u */
 #define IE_EXT_CAPABILITY                127	/* 802.11n D3.03 */
+#define IE_OPERATING_MODE_NOTIFY	199
 
 #define IE_WPA                          221	/* WPA */
 #define IE_VENDOR_SPECIFIC              221	/* Wifi WMM (WME) */
 #define	IE_WFA_WSC							221
 
+#define OUI_P2P					0x09
+#define OUI_HS2_INDICATION		0x10
 #define OUI_BROADCOM_HT              51	/* */
 #define OUI_BROADCOM_HTADD           52	/* */
 #define OUI_PREN_HT_CAP              51	/* */
@@ -761,6 +822,14 @@ enum WIFI_MODE{
 #define WSC_STATE_MACHINE            17
 #define WSC_UPNP_STATE_MACHINE		    18
 
+#ifdef CONFIG_AP_SUPPORT
+#ifdef APCLI_SUPPORT
+#define APCLI_AUTH_STATE_MACHINE			19
+#define APCLI_ASSOC_STATE_MACHINE			20
+#define APCLI_SYNC_STATE_MACHINE			21
+#define APCLI_CTRL_STATE_MACHINE			22
+#endif /* APCLI_SUPPORT */
+#endif /* CONFIG_AP_SUPPORT */
 
 #define WPA_STATE_MACHINE            		23
 
@@ -868,7 +937,11 @@ enum WIFI_MODE{
 	(see Table 7 Management Action Frame Fields)
 */
 #define MT2_PEER_WMM				17
-#define MAX_IEEE_STD_CATE			17	/* Indicate the maximum category code defined in IEEE-802.11-Std */
+#define WNM_CATEGORY_BSS_TRANSITION		18
+#define MT2_PEER_RESV_19			19
+#define MT2_PEER_RESV_20			20
+#define MT2_PEER_VHT_CATE			21
+#define MAX_IEEE_STD_CATE			21	/* Indicate the maximum category code defined in IEEE-802.11-Std */
 #define MAX_PEER_CATE_MSG			MAX_IEEE_STD_CATE
 
 #define MT2_MLME_ADD_BA_CATE		(MAX_IEEE_STD_CATE + 1)
@@ -879,7 +952,6 @@ enum WIFI_MODE{
 #define MT2_ACT_INVALID			(MAX_IEEE_STD_CATE + 6)
 
 #define MAX_ACT_MSG				(MAX_IEEE_STD_CATE + 7)
-
 
 #define MT2_ACT_VENDOR				0x7F
 
@@ -892,7 +964,28 @@ enum WIFI_MODE{
 #define CATEGORY_RM			5
 #define CATEGORY_FT				6
 #define CATEGORY_HT			7
+#ifdef DOT11W_PMF_SUPPORT
+#define CATEGORY_SA			8	/* defined in IEEE 802.11w-D8.0 7.3.1.11*/
+#define CATEGORY_PD			9	/* Protected Dual of Action defined in IEEE 802.11w */
+#define CATEGORY_WNM 10
+#define CATEGORY_VSP			126	/* Vendor-specific Protected defined in IEEE 802.11w */
+#endif // DOT11W_PMF_SUPPORT //
+#define CATEGORY_VENDOR_SPECIFIC_WFD	0x7F
 
+
+#ifdef DOT11_VHT_AC
+#define CATEGORY_VHT		21
+
+#define ACT_VHT_COMPRESS_BF		0	/* VHT Compressed Beamforming */
+#define ACT_VHT_GRP_ID_MGMT		1	/* Group ID Management */
+#define ACT_VHT_OPMODE_NOTIFY		2	/* Operating Mode Notification */
+#endif /* DOT11_VHT_AC */
+
+#ifdef DOT11W_PMF_SUPPORT
+/* SA Query Action frame definition */
+#define ACTION_SAQ_REQUEST			0
+#define ACTION_SAQ_RESPONSE			1
+#endif // DOT11W_PMF_SUPPORT //
 
 /* DLS Action frame definition */
 #define ACTION_DLS_REQUEST		0
@@ -921,12 +1014,12 @@ enum WIFI_MODE{
 #define ACTION_DSE_MEASUREMENT_REPORT		6	/* 11y D9.0 */
 #define ACTION_MEASUREMENT_PILOT_ACTION		7	/* 11y D9.0 */
 #define ACTION_DSE_POWER_CONSTRAINT			8	/* 11y D9.0 */
-#define ACTION_WIFI_DIRECT						9 	/* 11y */
-#define ACTION_GAS_INITIAL_REQ					10 	/* 11U */
-#define ACTION_GAS_INITIAL_RSP					11 	/* 11U */
+#define ACTION_WIFI_DIRECT					9 	/* 11y */
+#define ACTION_GAS_INITIAL_REQ				10 	/* 11U */
+#define ACTION_GAS_INITIAL_RSP				11 	/* 11U */
 #define ACTION_GAS_COMEBACK_REQ				12 	/* 11U */
 #define ACTION_GAS_COMEBACK_RSP				13 	/* 11U */
-#define ACTION_TDLS_DISCOVERY_RSP				14	/* 11z D13.0 */
+#define ACTION_TDLS_DISCOVERY_RSP			14	/* 11z D13.0 */
 #define ACTION_VENDOR_USAGE					221
 
 /*HT  Action field value */
@@ -939,6 +1032,12 @@ enum WIFI_MODE{
 #define MIMO_BEACONFORM				6	/* compressed beamforming report */
 #define ANTENNA_SELECT					7
 #define HT_INFO_EXCHANGE				8
+
+/* VHT Action field value */
+#define ACT_VHT_COMP_BFING		0	/* VHT Compressed Beamforming */
+#define ACT_VHT_GRP_ID_MGMT		1	/* Group ID Management */
+#define ACT_VHT_OPMODE_NOTIFY		2	/* Operating Mode Notification */
+
 
 #define ACT_FUNC_SIZE                 (MAX_ACT_STATE * MAX_ACT_MSG)
 /*
@@ -1073,7 +1172,12 @@ enum WIFI_MODE{
 #define APMT2_MLME_SCAN_REQ		3
 #define APMT2_SCAN_TIMEOUT		4
 #define APMT2_MLME_SCAN_CNCL		5
+#ifdef CON_WPS
+#define APMT2_MLME_SCAN_COMPLETE        6
+#define AP_MAX_SYNC_MSG                 7
+#else
 #define AP_MAX_SYNC_MSG			6
+#endif /* CON_WPS */
 #else
 #define AP_MAX_SYNC_MSG			3
 #endif
@@ -1134,7 +1238,13 @@ enum WIFI_MODE{
 #define APCLI_CTRL_ASSOC                  4
 #define APCLI_CTRL_DEASSOC                5
 #define APCLI_CTRL_CONNECTED              6
+#ifndef	APCLI_CONNECTION_TRIAL
 #define APCLI_MAX_CTRL_STATE              7
+#else
+#undef APCLI_MAC_CTRL_STATE
+#define APCLI_CTRL_TRIAL_TRIGGERED        7
+#define APCLI_MAX_CTRL_STATE              8
+#endif	/* APCLI_CONNECTION_TRIAL */
 
 #define APCLI_CTRL_MACHINE_BASE           0
 #define APCLI_CTRL_JOIN_REQ               0
@@ -1149,7 +1259,15 @@ enum WIFI_MODE{
 #define APCLI_CTRL_ASSOC_REQ_TIMEOUT      9
 #define APCLI_CTRL_MT2_AUTH_REQ			  10
 #define APCLI_CTRL_MT2_ASSOC_REQ		  11
-#define APCLI_MAX_CTRL_MSG                12
+#define APCLI_CTRL_SCAN_DONE              12
+#define APCLI_MIC_FAILURE_REPORT_FRAME 13
+#ifndef APCLI_CONNECTION_TRIAL
+#define APCLI_MAX_CTRL_MSG                14
+#else
+#undef APCLI_MAX_CTRL_MSG
+#define	APCLI_CTRL_TRIAL_CONNECT	14
+#define APCLI_MAX_CTRL_MSG		15
+#endif
 
 #define APCLI_CTRL_FUNC_SIZE              (APCLI_MAX_CTRL_STATE * APCLI_MAX_CTRL_MSG)
 
@@ -1272,27 +1390,49 @@ enum WIFI_MODE{
 #define MCS_AUTO		33
 
 #ifdef DOT11_VHT_AC
-#define MCS_VHT_1SS_MCS0	0
-#define MCS_VHT_1SS_MCS1	1
-#define MCS_VHT_1SS_MCS2	2
-#define MCS_VHT_1SS_MCS3	3
-#define MCS_VHT_1SS_MCS4	4
-#define MCS_VHT_1SS_MCS5	5
-#define MCS_VHT_1SS_MCS6	6
-#define MCS_VHT_1SS_MCS7	7
-#define MCS_VHT_1SS_MCS8	8
-#define MCS_VHT_1SS_MCS9	9
+#define MCS_VHT_2SS_MCS9	0x29
+#define MCS_VHT_2SS_MCS8	0x28
+#define MCS_VHT_2SS_MCS7	0x27
+#define MCS_VHT_2SS_MCS6	0x26
+#define MCS_VHT_2SS_MCS5	0x25
+#define MCS_VHT_2SS_MCS4	0x24
+#define MCS_VHT_2SS_MCS3	0x23
+#define MCS_VHT_2SS_MCS2	0x22
+#define MCS_VHT_2SS_MCS1	0x21
+#define MCS_VHT_2SS_MCS0	0x20
 
-#define MCS_VHT_2SS_MCS0	10
-#define MCS_VHT_2SS_MCS1	11
-#define MCS_VHT_2SS_MCS2	12
-#define MCS_VHT_2SS_MCS3	13
-#define MCS_VHT_2SS_MCS4	14
-#define MCS_VHT_2SS_MCS5	15
-#define MCS_VHT_2SS_MCS6	16
-#define MCS_VHT_2SS_MCS7	17
-#define MCS_VHT_2SS_MCS8	18
-#define MCS_VHT_2SS_MCS9	19
+#define MCS_VHT_1SS_MCS9	0x19
+#define MCS_VHT_1SS_MCS8	0x18
+#define MCS_VHT_1SS_MCS7	0x17
+#define MCS_VHT_1SS_MCS6	0x16
+#define MCS_VHT_1SS_MCS5	0x15
+#define MCS_VHT_1SS_MCS4	0x14
+#define MCS_VHT_1SS_MCS3	0x13
+#define MCS_VHT_1SS_MCS2	0x12
+#define MCS_VHT_1SS_MCS1	0x11
+#define MCS_VHT_1SS_MCS0	0x10
+
+#define VHT_RATE_IDX_1SS_MCS0	0
+#define VHT_RATE_IDX_1SS_MCS1	1
+#define VHT_RATE_IDX_1SS_MCS2	2
+#define VHT_RATE_IDX_1SS_MCS3	3
+#define VHT_RATE_IDX_1SS_MCS4	4
+#define VHT_RATE_IDX_1SS_MCS5	5
+#define VHT_RATE_IDX_1SS_MCS6	6
+#define VHT_RATE_IDX_1SS_MCS7	7
+#define VHT_RATE_IDX_1SS_MCS8	8
+#define VHT_RATE_IDX_1SS_MCS9	9
+
+#define VHT_RATE_IDX_2SS_MCS0	10
+#define VHT_RATE_IDX_2SS_MCS1	11
+#define VHT_RATE_IDX_2SS_MCS2	12
+#define VHT_RATE_IDX_2SS_MCS3	13
+#define VHT_RATE_IDX_2SS_MCS4	14
+#define VHT_RATE_IDX_2SS_MCS5	15
+#define VHT_RATE_IDX_2SS_MCS6	16
+#define VHT_RATE_IDX_2SS_MCS7	17
+#define VHT_RATE_IDX_2SS_MCS8	18
+#define VHT_RATE_IDX_2SS_MCS9	19
 #endif /* DOT11_VHT_AC */
 
 #ifdef DOT11_N_SUPPORT
@@ -1357,14 +1497,14 @@ enum WIFI_MODE{
 #define MCSFBK_MRQ	3	/* response to both MRQ and unsolict mcs feedback */
 
 /* MIMO power safe */
-#define	MMPS_STATIC	0
-#define	MMPS_DYNAMIC		1
-#define   MMPS_RSV		2
-#define MMPS_ENABLE		3
+#define MMPS_STATIC		0
+#define MMPS_DYNAMIC	1
+#define MMPS_RSV		2
+#define MMPS_DISABLE	3
 
 /* A-MSDU size */
 #define	AMSDU_0	0
-#define	AMSDU_1		1
+#define	AMSDU_1	1
 
 #endif /* DOT11_N_SUPPORT */
 
@@ -1501,6 +1641,9 @@ enum WIFI_MODE{
 #define MAX_RX_REORDERBUF   64
 #define DEFAULT_TX_TIMEOUT   30
 #define DEFAULT_RX_TIMEOUT   30
+#ifdef CONFIG_AP_SUPPORT
+#define MAX_BARECI_SESSION   16
+#endif /* CONFIG_AP_SUPPORT */
 
 /* definition of Recipient or Originator */
 #define I_RECIPIENT                  TRUE
@@ -1510,7 +1653,7 @@ enum WIFI_MODE{
 #define DEFAULT_RF_TX_POWER         5
 #define DEFAULT_BBP_TX_FINE_POWER_CTRL 0
 
-#define MAX_INI_BUFFER_SIZE		10000
+#define MAX_INI_BUFFER_SIZE		10000 	/* 4096 */
 #define MAX_PARAM_BUFFER_SIZE		(2048)	/* enough for ACL (18*64) */
 											/*18 : the length of Mac address acceptable format "01:02:03:04:05:06;") */
 											/*64 : MAX_NUM_OF_ACL_LIST */
@@ -1573,6 +1716,7 @@ enum WIFI_MODE{
 #define INT_APCLI			0x0400
 #define INT_MESH			0x0500
 #define INT_P2P				0x0600
+#define INT_MONITOR			0x0700
 
 #define ENTRY_NONE			0
 #define ENTRY_CLIENT		1
@@ -1581,6 +1725,8 @@ enum WIFI_MODE{
 #define ENTRY_MESH			4
 #define ENTRY_DLS			5
 #define ENTRY_TDLS			6
+#define ENTRY_MCAST		7
+#define ENTRY_WDEV			8
 
 
 #define IS_ENTRY_NONE(_x)		((_x)->EntryType == ENTRY_NONE)
@@ -1593,6 +1739,8 @@ enum WIFI_MODE{
 #ifdef CLIENT_WDS
 #define IS_ENTRY_CLIWDS(_x)		CLIENT_STATUS_TEST_FLAG((_x), fCLIENT_STATUS_CLI_WDS)
 #endif /* CLIENT_WDS */
+
+#define IS_VALID_ENTRY(_x)		(((_x) != NULL) && ((_x)->EntryType != ENTRY_NONE))
 
 #define SET_ENTRY_NONE(_x)		((_x)->EntryType = ENTRY_NONE)
 #define SET_ENTRY_CLIENT(_x)	((_x)->EntryType = ENTRY_CLIENT)
@@ -1616,7 +1764,7 @@ enum WIFI_MODE{
 #define CONFIG_RT_FIRST_CARD 7610
 #define CONFIG_RT_SECOND_CARD 7610
 
-#ifdef ANDROID_SUPPORT
+#if defined(ANDROID_SUPPORT) || defined(RT_CFG80211_SUPPORT)
 #define INF_MAIN_DEV_NAME		"wlan"
 #define INF_MBSSID_DEV_NAME		"wlan"
 #else
@@ -1641,11 +1789,13 @@ enum WIFI_MODE{
 #define INF_APCLI_DEV_NAME		"apclii"
 #define INF_MESH_DEV_NAME		"meshi"
 #define INF_P2P_DEV_NAME		"p2pi"
+#define INF_MONITOR_DEV_NAME	"moni"
 #else
 #define INF_WDS_DEV_NAME		"wds"
 #define INF_APCLI_DEV_NAME		"apcli"
 #define INF_MESH_DEV_NAME		"mesh"
 #define INF_P2P_DEV_NAME		"p2p"
+#define INF_MONITOR_DEV_NAME	"mon"
 #endif
 
 /* WEP Key TYPE */
@@ -1737,7 +1887,9 @@ enum WIFI_MODE{
 #define MAX_RX_REORDERBUF		64
 #define DEFAULT_TX_TIMEOUT		30
 #define DEFAULT_RX_TIMEOUT		30
+#ifndef CONFIG_AP_SUPPORT
 #define MAX_BARECI_SESSION		8
+#endif
 
 #ifndef IW_ESSID_MAX_SIZE
 /* Maximum size of the ESSID and pAd->nickname strings */
@@ -1753,6 +1905,7 @@ enum WIFI_MODE{
 #endif /* MCAST_RATE_SPECIFIC */
 
 /* For AsicRadioOff/AsicRadioOn function */
+// TODO: shiang-usw, check those RADIO ON/OFF values here!!!
 #define DOT11POWERSAVE		0
 #define GUIRADIO_OFF		1
 #define RTMP_HALT		    2
@@ -1760,6 +1913,16 @@ enum WIFI_MODE{
 #ifdef RT3290
 #define FROM_TX		4
 #endif /* RT3290 */
+
+enum {
+	RESUME_RADIO_ON,
+	SUSPEND_RADIO_OFF,
+	MLME_RADIO_ON,
+	MLME_RADIO_OFF,
+	DOT11_RADIO_ON,
+	DOT11_RADIO_OFF,
+};
+
 /* -- */
 
 /* definition for WpaSupport flag */
@@ -1767,6 +1930,13 @@ enum WIFI_MODE{
 #define WPA_SUPPLICANT_ENABLE				0x01
 #define	WPA_SUPPLICANT_ENABLE_WITH_WEB_UI	0x02
 #define	WPA_SUPPLICANT_ENABLE_WPS			0x80
+
+#ifdef MICROWAVE_OVEN_SUPPORT
+/* definition for mitigating microwave interference */
+#define MO_FALSE_CCA_TH	25
+#define MO_MEAS_PERIOD	0	/* 0 ~ 100 ms */
+#define MO_IDLE_PERIOD	1	/* 100 ~ 1000 ms */
+#endif /* MICROWAVE_OVEN_SUPPORT */
 
 /* definition for Antenna Diversity flag */
 typedef enum {
@@ -1785,12 +1955,11 @@ enum IEEE80211_BAND {
   IEEE80211_BAND_NUMS
 };
 
-enum {
-	RESUME_RADIO_ON,
-	SUSPEND_RADIO_OFF,
-	MLME_RADIO_ON,
-	MLME_RADIO_OFF,
-};
+#ifdef CONFIG_SWITCH_CHANNEL_OFFLOAD
+#define CHANNEL_SWITCH_OFFLOAD 0x68 
+#define CHANNEL_MCU_READY 0x7064
+#endif /* CONFIG_SWITCH_CHANNEL_OFFLOAD */
+
 
 /* Advertismenet Protocol ID definitions */
 enum DOT11U_ADVERTISMENT_PROTOCOL_ID {

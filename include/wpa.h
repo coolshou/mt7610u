@@ -1,88 +1,82 @@
 /*
- *************************************************************************
+ ***************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology 5th Rd.
+ * Science-based Industrial Park
+ * Hsin-chu, Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002-2004, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved. Ralink's source code is an unpublished work and the
+ * use of a copyright notice does not imply otherwise. This source code
+ * contains confidential trade secret material of Ralink Tech. Any attemp
+ * or participation in deciphering, decoding, reverse engineering or in any
+ * way altering the source code is stricitly prohibited, unless the prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************
 
+	Module Name:
+	wpa.h
 
-#ifndef	__WPA_H__
-#define	__WPA_H__
+*/
+
+#ifndef __WPA_H__
+#define __WPA_H__
 
 #ifndef ROUND_UP
 #define ROUND_UP(__x, __y) \
 	(((ULONG)((__x)+((__y)-1))) & ((ULONG)~((__y)-1)))
 #endif
 
-#define	SET_UINT16_TO_ARRARY(_V, _LEN)		\
-{											\
-	_V[0] = ((UINT16)_LEN) >> 8;			\
-	_V[1] = ((UINT16)_LEN & 0xFF);					\
+#define SET_UINT16_TO_ARRARY(_V, _LEN)		\
+{						\
+	_V[0] = ((UINT16)_LEN) >> 8;		\
+	_V[1] = ((UINT16)_LEN & 0xFF);		\
 }
 
-#define	INC_UINT16_TO_ARRARY(_V, _LEN)			\
-{												\
-	UINT16	var_len;							\
-												\
-	var_len = (_V[0]<<8) | (_V[1]);				\
-	var_len += _LEN;							\
-												\
-	_V[0] = (var_len & 0xFF00) >> 8;			\
-	_V[1] = (var_len & 0xFF);					\
+#define INC_UINT16_TO_ARRARY(_V, _LEN)		\
+{						\
+	UINT16	var_len;			\
+						\
+	var_len = (_V[0]<<8) | (_V[1]);		\
+	var_len += _LEN;			\
+						\
+	_V[0] = (var_len & 0xFF00) >> 8;	\
+	_V[1] = (var_len & 0xFF);		\
 }
 
-#define	CONV_ARRARY_TO_UINT16(_V)	((_V[0]<<8) | (_V[1]))
+#define CONV_ARRARY_TO_UINT16(_V)	((_V[0]<<8) | (_V[1]))
 
-#define	ADD_ONE_To_64BIT_VAR(_V)		\
-{										\
-	UCHAR	cnt = LEN_KEY_DESC_REPLAY;	\
-	do									\
-	{									\
-		cnt--;							\
-		_V[cnt]++;						\
-		if (cnt == 0)					\
-			break;						\
-	}while (_V[cnt] == 0);				\
+#define ADD_ONE_To_64BIT_VAR(_V)		\
+{						\
+	UCHAR cnt = LEN_KEY_DESC_REPLAY;	\
+	do					\
+	{					\
+		cnt--;				\
+		_V[cnt]++;			\
+		if (cnt == 0)			\
+			break;			\
+	}while (_V[cnt] == 0);			\
 }
 
-#define INC_TX_TSC(_tsc, _cnt)                          \
-{                                                       \
-    INT i=0;                                            \
-	while (++_tsc[i] == 0x0)                            \
-    {                                                   \
-        i++;                                            \
-		if (i == (_cnt))                                \
-			break;                                      \
-	}                                                   \
+#define INC_TX_TSC(_tsc, _cnt)			\
+{						\
+	int i = 0;				\
+	while (++_tsc[i] == 0x0) {		\
+		i++;				\
+		if (i == (_cnt))		\
+			break;			\
+	}					\
 }
 
-#define IS_WPA_CAPABILITY(a)       (((a) >= Ndis802_11AuthModeWPA) && ((a) <= Ndis802_11AuthModeWPA1PSKWPA2PSK))
+#define IS_WPA_CAPABILITY(a)	(((a) >= Ndis802_11AuthModeWPA) && ((a) <= Ndis802_11AuthModeWPA1PSKWPA2PSK))
 
-/* 	
+/*
 	WFA recommend to restrict the encryption type in 11n-HT mode.
- 	So, the WEP and TKIP shall not be allowed to use HT rate. 
+ 	So, the WEP and TKIP shall not be allowed to use HT rate.
  */
-#define IS_INVALID_HT_SECURITY(_mode)		\
-	(((_mode) == Ndis802_11Encryption1Enabled) || \
+#define IS_INVALID_HT_SECURITY(_mode)			\
+	(((_mode) == Ndis802_11Encryption1Enabled) || 	\
 	 ((_mode) == Ndis802_11Encryption2Enabled))
 
 #define MIX_CIPHER_WPA_TKIP_ON(x)       (((x) & 0x08) != 0)
@@ -203,14 +197,9 @@
 /*========================================
 	The prototype is defined in cmm_wpa.c
   ========================================*/
-void inc_iv_byte(
-	UCHAR *iv,
-	UINT len,
-	UINT cnt);
+void inc_iv_byte(UCHAR *iv, UINT len, UINT cnt);
 
-BOOLEAN WpaMsgTypeSubst(
-	IN UCHAR EAPType,
-	OUT INT *MsgType);
+BOOLEAN WpaMsgTypeSubst(UCHAR EAPType, int *MsgType);
 
 VOID PRF(
 	IN UCHAR *key,
@@ -222,27 +211,24 @@ VOID PRF(
 	OUT UCHAR *output,
 	IN INT len);
 
-int RtmpPasswordHash(
-	char *password,
-	unsigned char *ssid,
-	int ssidlength,
+int RtmpPasswordHash(char *password, unsigned char *ssid, int ssidlength,
 	unsigned char *output);
 
-	VOID KDF(
-	IN PUINT8 key,
-	IN INT key_len,
-	IN PUINT8 label,
-	IN INT label_len,
-	IN PUINT8 data,
-	IN INT data_len,
-	OUT PUINT8 output,
-	IN USHORT len);
+void KDF(
+	PUINT8 key,
+	int key_len,
+	PUINT8 label,
+	int label_len,
+	PUINT8 data,
+	int data_len,
+	PUINT8 output,
+	USHORT len);
 
 PUINT8 WPA_ExtractSuiteFromRSNIE(
-	IN PUINT8 rsnie,
-	IN UINT rsnie_len,
-	IN UINT8 type,
-	OUT UINT8 *count);
+	PUINT8 rsnie,
+	UINT rsnie_len,
+	UINT8 type,
+	UINT8 *count);
 
 VOID WpaShowAllsuite(
 	IN PUINT8 rsnie,
@@ -256,21 +242,21 @@ VOID RTMPInsertRSNIE(
 	IN PUINT8 pmkid_ptr,
 	IN UINT8 pmkid_len);
 
-/* 
- =====================================	
+/*
+ =====================================
  	function prototype in cmm_wpa.c
- =====================================	
+ =====================================
 */
-VOID RTMPToWirelessSta(
-	IN PRTMP_ADAPTER pAd,
-	IN PMAC_TABLE_ENTRY pEntry,
-	IN PUCHAR pHeader802_3,
-	IN UINT HdrLen,
-	IN PUCHAR pData,
-	IN UINT DataLen,
-	IN BOOLEAN bClearFrame);
+void RTMPToWirelessSta(
+	PRTMP_ADAPTER pAd,
+	PMAC_TABLE_ENTRY pEntry,
+	PUCHAR pHeader802_3,
+	UINT HdrLen,
+	PUCHAR pData,
+	UINT DataLen,
+	BOOLEAN bClearFrame);
 
-VOID WpaDerivePTK(
+void WpaDerivePTK(
 	IN PRTMP_ADAPTER pAd,
 	IN UCHAR *PMK,
 	IN UCHAR *ANonce,
@@ -280,32 +266,32 @@ VOID WpaDerivePTK(
 	OUT UCHAR *output,
 	IN UINT len);
 
-VOID WpaDeriveGTK(
-	IN UCHAR *PMK,
-	IN UCHAR *GNonce,
-	IN UCHAR *AA,
-	OUT UCHAR *output,
-	IN UINT len);
+void WpaDeriveGTK(
+	UCHAR *PMK,
+	UCHAR *GNonce,
+	UCHAR *AA,
+	UCHAR *output,
+	UINT len);
 
-VOID GenRandom(
-	IN PRTMP_ADAPTER pAd,
-	IN UCHAR *macAddr,
-	OUT UCHAR *random);
+void GenRandom(
+	PRTMP_ADAPTER pAd,
+	UCHAR *macAddr,
+	UCHAR *random);
 
 BOOLEAN RTMPCheckWPAframe(
-	IN PRTMP_ADAPTER pAd,
-	IN PMAC_TABLE_ENTRY pEntry,
-	IN PUCHAR pData,
-	IN ULONG DataByteCount,
-	IN UCHAR FromWhichBSSID);
+	PRTMP_ADAPTER pAd,
+	PMAC_TABLE_ENTRY pEntry,
+	PUCHAR pData,
+	ULONG DataByteCount,
+	UCHAR FromWhichBSSID);
 
 #ifdef HDR_TRANS_SUPPORT
 BOOLEAN RTMPCheckWPAframe_Hdr_Trns(
-	IN PRTMP_ADAPTER pAd,
-	IN PMAC_TABLE_ENTRY pEntry,
-	IN PUCHAR pData,
-	IN ULONG DataByteCount,
-	IN UCHAR FromWhichBSSID);
+	PRTMP_ADAPTER pAd,
+	PMAC_TABLE_ENTRY pEntry,
+	PUCHAR pData,
+	ULONG DataByteCount,
+	UCHAR FromWhichBSSID);
 #endif /* HDR_TRANS_SUPPORT */
 
 BOOLEAN RTMPParseEapolKeyData(
@@ -317,12 +303,12 @@ BOOLEAN RTMPParseEapolKeyData(
 	IN BOOLEAN bWPA2,
 	IN MAC_TABLE_ENTRY *pEntry);
 
-VOID WPA_ConstructKdeHdr(
-	IN UINT8 data_type,
-	IN UINT8 data_len,
-	OUT PUCHAR pBuf);
+void WPA_ConstructKdeHdr(
+	UINT8 data_type,
+	UINT8 data_len,
+	PUCHAR pBuf);
 
-VOID ConstructEapolMsg(
+void ConstructEapolMsg(
 	IN PMAC_TABLE_ENTRY pEntry,
 	IN UCHAR GroupKeyWepStatus,
 	IN UCHAR MsgType,
@@ -335,49 +321,49 @@ VOID ConstructEapolMsg(
 	OUT PEAPOL_PACKET pMsg);
 
 PCIPHER_KEY RTMPSwCipherKeySelection(
-	IN PRTMP_ADAPTER pAd,
-	IN PUCHAR pIV,
-	IN RX_BLK *pRxBlk,
-	IN PMAC_TABLE_ENTRY pEntry);
+	PRTMP_ADAPTER pAd,
+	PUCHAR pIV,
+	RX_BLK *pRxBlk,
+	PMAC_TABLE_ENTRY pEntry);
 
 NDIS_STATUS RTMPSoftDecryptionAction(
-	IN PRTMP_ADAPTER pAd,
-	IN PUCHAR pHdr,
-	IN UCHAR UserPriority,
-	IN PCIPHER_KEY pKey,
-	INOUT PUCHAR pData,
-	INOUT UINT16 *DataByteCnt);
+	PRTMP_ADAPTER pAd,
+	PUCHAR pHdr,
+	UCHAR UserPriority,
+	PCIPHER_KEY pKey,
+	PUCHAR pData,
+	UINT16 *DataByteCnt);
 
-VOID RTMPSoftConstructIVHdr(
-	IN UCHAR CipherAlg,
-	IN UCHAR key_id,
-	IN PUCHAR pTxIv,
-	OUT PUCHAR pHdrIv,
-	OUT UINT8 *hdr_iv_len);
+void RTMPSoftConstructIVHdr(
+	UCHAR CipherAlg,
+	UCHAR key_id,
+	PUCHAR pTxIv,
+	PUCHAR pHdrIv,
+	UINT8 *hdr_iv_len);
 
-VOID RTMPSoftEncryptionAction(
-	IN PRTMP_ADAPTER pAd,
-	IN UCHAR CipherAlg,
-	IN PUCHAR pHdr,
-	IN PUCHAR pSrcBufData,
-	IN UINT32 SrcBufLen,
-	IN UCHAR KeyIdx,
-	IN PCIPHER_KEY pKey,
-	OUT UINT8 *ext_len);
+void RTMPSoftEncryptionAction(
+	PRTMP_ADAPTER pAd,
+	UCHAR CipherAlg,
+	PUCHAR pHdr,
+	PUCHAR pSrcBufData,
+	UINT32 SrcBufLen,
+	UCHAR KeyIdx,
+	PCIPHER_KEY pKey,
+	UINT8 *ext_len);
 
-VOID RTMPMakeRSNIE(
-	IN PRTMP_ADAPTER pAd,
-	IN UINT AuthMode,
-	IN UINT WepStatus,
-	IN UCHAR apidx);
+void RTMPMakeRSNIE(
+	PRTMP_ADAPTER pAd,
+	UINT AuthMode,
+	UINT WepStatus,
+	UCHAR apidx);
 
-VOID WPAInstallPairwiseKey(
+void WPAInstallPairwiseKey(
 	PRTMP_ADAPTER pAd,
 	UINT8 BssIdx,
 	PMAC_TABLE_ENTRY pEntry,
 	BOOLEAN bAE);
 
-VOID WPAInstallSharedKey(
+void WPAInstallSharedKey(
 	PRTMP_ADAPTER pAd,
 	UINT8 GroupCipher,
 	UINT8 BssIdx,
@@ -387,7 +373,7 @@ VOID WPAInstallSharedKey(
 	PUINT8 pGtk,
 	UINT8 GtkLen);
 
-VOID RTMPSetWcidSecurityInfo(
+void RTMPSetWcidSecurityInfo(
 	PRTMP_ADAPTER pAd,
 	UINT8 BssIdx,
 	UINT8 KeyIdx,
@@ -395,10 +381,10 @@ VOID RTMPSetWcidSecurityInfo(
 	UINT8 Wcid,
 	UINT8 KeyTabFlag);
 
-VOID CalculateMIC(
-	IN UCHAR KeyDescVer,
-	IN UCHAR *PTK,
-	OUT PEAPOL_PACKET pMsg);
+void CalculateMIC(
+	UCHAR KeyDescVer,
+	UCHAR *PTK,
+	PEAPOL_PACKET pMsg);
 
 PSTRING GetEapolMsgType(
 	CHAR msg);
@@ -406,65 +392,65 @@ PSTRING GetEapolMsgType(
 #ifdef CONFIG_STA_SUPPORT
 #endif /* CONFIG_STA_SUPPORT */
 
-/* 
- =====================================	
+/*
+ =====================================
  	function prototype in cmm_wep.c
- =====================================	
+ =====================================
 */
 UINT RTMP_CALC_FCS32(
-	IN UINT Fcs,
-	IN PUCHAR Cp,
-	IN INT Len);
+	UINT Fcs,
+	PUCHAR Cp,
+	int Len);
 
-VOID RTMPConstructWEPIVHdr(
-	IN UINT8 key_idx,
-	IN UCHAR *pn,
-	OUT UCHAR *iv_hdr);
+void RTMPConstructWEPIVHdr(
+	UINT8 key_idx,
+	UCHAR *pn,
+	UCHAR *iv_hdr);
 
 BOOLEAN RTMPSoftEncryptWEP(
-	IN PRTMP_ADAPTER pAd,
-	IN PUCHAR pIvHdr,
-	IN PCIPHER_KEY pKey,
-	INOUT PUCHAR pData,
-	IN ULONG DataByteCnt);
+	PRTMP_ADAPTER pAd,
+	PUCHAR pIvHdr,
+	PCIPHER_KEY pKey,
+	PUCHAR pData,
+	ULONG DataByteCnt);
 
 BOOLEAN RTMPSoftDecryptWEP(
-	IN PRTMP_ADAPTER pAd,
-	IN PCIPHER_KEY pKey,
-	INOUT PUCHAR pData,
-	INOUT UINT16 *DataByteCnt);
+	PRTMP_ADAPTER pAd,
+	PCIPHER_KEY pKey,
+	PUCHAR pData,
+	UINT16 *DataByteCnt);
 
-/* 
- =====================================	
+/*
+ =====================================
  	function prototype in cmm_tkip.c
- =====================================	
+ =====================================
 */
 BOOLEAN RTMPSoftDecryptTKIP(
-	IN PRTMP_ADAPTER pAd,
-	IN PUCHAR pHdr,
-	IN UCHAR UserPriority,
-	IN PCIPHER_KEY pKey,
-	INOUT PUCHAR pData,
-	IN UINT16 *DataByteCnt);
+	PRTMP_ADAPTER pAd,
+	PUCHAR pHdr,
+	UCHAR UserPriority,
+	PCIPHER_KEY pKey,
+	PUCHAR pData,
+	UINT16 *DataByteCnt);
 
-VOID TKIP_GTK_KEY_WRAP(
-	IN UCHAR *key,
-	IN UCHAR *iv,
-	IN UCHAR *input_text,
-	IN UINT32 input_len,
-	OUT UCHAR *output_text);
+void TKIP_GTK_KEY_WRAP(
+	UCHAR *key,
+	UCHAR *iv,
+	UCHAR *input_text,
+	UINT32 input_len,
+	UCHAR *output_text);
 
-VOID TKIP_GTK_KEY_UNWRAP(
-	IN UCHAR *key,
-	IN UCHAR *iv,
-	IN UCHAR *input_text,
-	IN UINT32 input_len,
-	OUT UCHAR *output_text);
+void TKIP_GTK_KEY_UNWRAP(
+	UCHAR *key,
+	UCHAR *iv,
+	UCHAR *input_text,
+	UINT32 input_len,
+	UCHAR *output_text);
 
-/* 
- =====================================	
+/*
+ =====================================
  	function prototype in cmm_aes.c
- =====================================	
+ =====================================
 */
 BOOLEAN RTMPSoftDecryptAES(
 	IN PRTMP_ADAPTER pAd,
@@ -472,25 +458,25 @@ BOOLEAN RTMPSoftDecryptAES(
 	IN ULONG DataByteCnt,
 	IN PCIPHER_KEY pWpaKey);
 
-VOID RTMPConstructCCMPHdr(
-	IN UINT8 key_idx,
-	IN UCHAR *pn,
-	OUT UCHAR *ccmp_hdr);
+void RTMPConstructCCMPHdr(
+	UINT8 key_idx,
+	UCHAR *pn,
+	UCHAR *ccmp_hdr);
 
 BOOLEAN RTMPSoftEncryptCCMP(
-	IN PRTMP_ADAPTER pAd,
-	IN PUCHAR pHdr,
-	IN PUCHAR pIV,
-	IN PUCHAR pKey,
-	INOUT PUCHAR pData,
-	IN UINT32 DataLen);
+	PRTMP_ADAPTER pAd,
+	PUCHAR pHdr,
+	PUCHAR pIV,
+	PUCHAR pKey,
+	PUCHAR pData,
+	UINT32 DataLen);
 
 BOOLEAN RTMPSoftDecryptCCMP(
-	IN PRTMP_ADAPTER pAd,
-	IN PUCHAR pHdr,
-	IN PCIPHER_KEY pKey,
-	INOUT PUCHAR pData,
-	INOUT UINT16 *DataLen);
+	PRTMP_ADAPTER pAd,
+	PUCHAR pHdr,
+	PCIPHER_KEY pKey,
+	PUCHAR pData,
+	UINT16 *DataLen);
 
 VOID CCMP_test_vector(
 	IN PRTMP_ADAPTER pAd,

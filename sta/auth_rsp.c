@@ -1,30 +1,30 @@
 /*
- *************************************************************************
+ ***************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology	5th	Rd.
+ * Science-based Industrial	Park
+ * Hsin-chu, Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002-2004, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved.	Ralink's source	code is	an unpublished work	and	the
+ * use of a	copyright notice does not imply	otherwise. This	source code
+ * contains	confidential trade secret material of Ralink Tech. Any attemp
+ * or participation	in deciphering,	decoding, reverse engineering or in	any
+ * way altering	the	source code	is stricitly prohibited, unless	the	prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************
 
+	Module Name:
+	auth_rsp.c
 
+	Abstract:
+
+	Revision History:
+	Who			When			What
+	--------	----------		----------------------------------------------
+	John		2004-10-1		copy from RT2560
+*/
 #include "rt_config.h"
 
 /*
@@ -76,7 +76,6 @@ VOID PeerAuthSimpleRspGenAndSend(
 	HEADER_802_11 AuthHdr;
 	ULONG FrameLen = 0;
 	PUCHAR pOutBuffer = NULL;
-	NDIS_STATUS NStatus;
 
 	if (Reason != MLME_SUCCESS) {
 		DBGPRINT(RT_DEBUG_TRACE, ("Peer AUTH fail...\n"));
@@ -84,17 +83,18 @@ VOID PeerAuthSimpleRspGenAndSend(
 	}
 
 	/*Get an unused nonpaged memory */
-	NStatus = MlmeAllocateMemory(pAd, &pOutBuffer);
-	if (NStatus != NDIS_STATUS_SUCCESS)
+	pOutBuffer = MlmeAllocateMemory();
+	if (!pOutBuffer)
 		return;
 
 	DBGPRINT(RT_DEBUG_TRACE, ("Send AUTH response (seq#2)...\n"));
 	MgtMacHeaderInit(pAd, &AuthHdr, SUBTYPE_AUTH, 0, pHdr80211->Addr2,
+						pAd->CurrentAddress,
 						pAd->MlmeAux.Bssid);
 	MakeOutgoingFrame(pOutBuffer, &FrameLen, sizeof (HEADER_802_11),
 			  &AuthHdr, 2, &Alg, 2, &Seq, 2, &Reason, END_OF_ARGS);
 	MiniportMMRequest(pAd, 0, pOutBuffer, FrameLen);
-	MlmeFreeMemory(pAd, pOutBuffer);
+	MlmeFreeMemory(pOutBuffer);
 }
 
 /*
@@ -115,14 +115,15 @@ VOID PeerDeauthAction(
 	USHORT Reason;
 	BOOLEAN bDoIterate = FALSE;
 
-	if (PeerDeauthSanity
-	    (pAd, Elem->Msg, Elem->MsgLen, Addr1, Addr2, Addr3, &Reason)) {
+	if (PeerDeauthSanity(pAd, Elem->Msg, Elem->MsgLen, Addr1, Addr2, Addr3, &Reason)) {
 		if (INFRA_ON(pAd)
 		    && (MAC_ADDR_EQUAL(Addr1, pAd->CurrentAddress)
 			|| MAC_ADDR_EQUAL(Addr1, BROADCAST_ADDR))
 		    && MAC_ADDR_EQUAL(Addr2, pAd->CommonCfg.Bssid)
 		    && MAC_ADDR_EQUAL(Addr3, pAd->CommonCfg.Bssid)
 		    ) {
+			struct wifi_dev *wdev = &pAd->StaCfg.wdev;
+
 			DBGPRINT(RT_DEBUG_TRACE,
 				 ("AUTH_RSP - receive DE-AUTH from our AP (Reason=%d)\n",
 				  Reason));
@@ -151,24 +152,20 @@ VOID PeerDeauthAction(
 
 
 #ifdef WPA_SUPPLICANT_SUPPORT
-			if ((pAd->StaCfg.WpaSupplicantUP !=
-			     WPA_SUPPLICANT_DISABLE)
-			    && (pAd->StaCfg.AuthMode == Ndis802_11AuthModeWPA2)
-			    && (pAd->StaCfg.PortSecured ==
-				WPA_802_1X_PORT_SECURED))
-				pAd->StaCfg.bLostAp = TRUE;
+			if ((pAd->StaCfg.wpa_supplicant_info.WpaSupplicantUP != WPA_SUPPLICANT_DISABLE)
+			    && (wdev->AuthMode == Ndis802_11AuthModeWPA2)
+			    && (wdev->PortSecured == WPA_802_1X_PORT_SECURED))
+				pAd->StaCfg.wpa_supplicant_info.bLostAp = TRUE;
 #endif /* WPA_SUPPLICANT_SUPPORT */
 
 			/*
 			   Some customer would set AP1 & AP2 same SSID, AuthMode & EncrypType but different WPAPSK,
 			   therefore we need to do iterate here.
 			 */
-			if ((pAd->StaCfg.PortSecured ==
-			     WPA_802_1X_PORT_NOT_SECURED)
+			if ((wdev->PortSecured == WPA_802_1X_PORT_NOT_SECURED)
 			    &&
-			    ((pAd->StaCfg.AuthMode == Ndis802_11AuthModeWPAPSK)
-			     || (pAd->StaCfg.AuthMode ==
-				 Ndis802_11AuthModeWPA2PSK))
+			    ((wdev->AuthMode == Ndis802_11AuthModeWPAPSK)
+			     || (wdev->AuthMode == Ndis802_11AuthModeWPA2PSK))
 			    )
 				bDoIterate = TRUE;
 

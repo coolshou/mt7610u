@@ -1,30 +1,33 @@
 /*
- *************************************************************************
+ ***************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
- * Taiwan, R.O.C.
+ * 4F, No. 2 Technology 5th Rd.
+ * Science-based Industrial Park
+ * Hsin-chu, Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002-2004, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved. Ralink's source code is an unpublished work and the
+ * use of a copyright notice does not imply otherwise. This source code
+ * contains confidential trade secret material of Ralink Tech. Any attemp
+ * or participation in deciphering, decoding, reverse engineering or in any
+ * way altering the source code is stricitly prohibited, unless the prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************
 
+	Module Name:
+	rt_config.h
 
+	Abstract:
+	Central header file to maintain all include files for all NDIS
+	miniport driver routines.
+
+	Revision History:
+	Who         When          What
+	--------    ----------    ----------------------------------------------
+	Paul Lin    08-01-2002    created
+
+*/
 #ifndef	__RT_CONFIG_H__
 #define	__RT_CONFIG_H__
 
@@ -33,17 +36,9 @@
 #include "rtmp_comm.h"
 /*#include "rtmp_type.h" */
 /*#include "rtmp_os.h" */
-
 #include "rtmp_def.h"
 #include "rtmp_chip.h"
 #include "rtmp_timer.h"
-
-
-#ifdef LINUX
-#ifdef RT_CFG80211_SUPPORT
-#include "cfg80211extr.h"
-#endif /* RT_CFG80211_SUPPORT */
-#endif /* LINUX */
 
 #ifdef AGS_SUPPORT
 #include "ags.h"
@@ -61,10 +56,15 @@
 #include "crypt_arc4.h"
 /*#include "rtmp_cmd.h" */
 #include "rtmp.h"
-#include "ap.h"
 #include "wpa.h"
 #include "chlist.h"
 #include "spectrum.h"
+
+#ifdef CONFIG_AP_SUPPORT
+#include "ap.h"
+#include "ap_autoChSel.h"
+#endif
+
 #include "rt_os_util.h"
 
 #include "eeprom.h"
@@ -82,11 +82,23 @@
 #include "uapsd.h"
 #endif /* UAPSD_SUPPORT */
 
+#ifdef CONFIG_AP_SUPPORT
+#ifdef MBSS_SUPPORT
+#include "ap_mbss.h"
+#endif
 
+#ifdef APCLI_SUPPORT
+#include "ap_apcli.h"
+#endif
 
+#include "ap_ids.h"
+#include "ap_cfg.h"
+
+#endif /* CONFIG_AP_SUPPORT */
 
 #ifdef CONFIG_STA_SUPPORT
-#endif /* CONFIG_STA_SUPPORT */
+#include "sta.h"
+#endif
 
 #ifdef BLOCK_NET_IF
 #include "netif_block.h"
@@ -110,23 +122,16 @@
 #endif /* RALINK_ATE */
 #endif /* RALINK_QA */
 
-
-
-
-
-
 #if defined(AP_WSC_INCLUDED) || defined(STA_WSC_INCLUDED)
 #define WSC_INCLUDED
 #endif
-
-
 
 #ifdef APCLI_WPA_SUPPLICANT_SUPPORT
 #ifndef APCLI_SUPPORT
 #error "Build Apcli for being controlled by NetworkManager or wext, please set HAS_APCLI_SUPPORT=y and HAS_APCLI_WPA_SUPPLICANT=y"
 #endif /* APCLI_SUPPORT */
+#define WPA_SUPPLICANT_SUPPORT
 #endif /* APCLI_WPA_SUPPLICANT_SUPPORT */
-
 
 #ifdef CONFIG_STA_SUPPORT
 #ifdef NATIVE_WPA_SUPPLICANT_SUPPORT
@@ -134,20 +139,15 @@
 #error "Build for being controlled by NetworkManager or wext, please set HAS_WPA_SUPPLICANT=y and HAS_NATIVE_WPA_SUPPLICANT_SUPPORT=y"
 #endif /* WPA_SUPPLICANT_SUPPORT */
 #endif /* NATIVE_WPA_SUPPLICANT_SUPPORT */
-
 #endif /* CONFIG_STA_SUPPORT */
 
-
+#ifdef DOT11W_PMF_SUPPORT
+#include "pmf.h"
+#endif
 
 #ifdef IKANOS_VX_1X0
 #include "vr_ikans.h"
 #endif /* IKANOS_VX_1X0 */
-
-
-
-
-
-
 
 #ifdef WFD_SUPPORT
 #include "wfd.h"
@@ -156,23 +156,31 @@
 #ifdef DOT11_VHT_AC
 #include "vht.h"
 #endif /* DOT11_VHT_AC */
+
 #ifdef CONFIG_STA_SUPPORT
 #include "sta_cfg.h"
 #endif /* CONFIG_STA_SUPPORT */
-
-
-
 
 #ifdef WORKQUEUE_BH
 #include <linux/workqueue.h>
 #endif /* WORKQUEUE_BH / */
 
+#ifdef RTMP_FREQ_CALIBRATION_SUPPORT
+#include "frq_cal.h"
+#endif
 
 #ifdef TXBF_SUPPORT
 #include "rt_txbf.h"
 #endif /* TXBF_SUPPORT */
 
-
+#ifdef RLT_MAC
 #include "mac_ral/fce.h"
+#endif
+
+#ifdef RT_CFG80211_SUPPORT
+#include "cfg80211extr.h"
+#include "cfg80211_cmm.h"
+#endif
 
 #endif	/* __RT_CONFIG_H__ */
+

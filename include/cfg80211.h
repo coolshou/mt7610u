@@ -1,42 +1,48 @@
-/*
- *************************************************************************
+/****************************************************************************
  * Ralink Tech Inc.
- * 5F., No.36, Taiyuan St., Jhubei City,
- * Hsinchu County 302,
  * Taiwan, R.O.C.
  *
- * (c) Copyright 2002-2010, Ralink Technology, Inc.
+ * (c) Copyright 2002, Ralink Technology, Inc.
  *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or     *
- * (at your option) any later version.                                   *
- *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- * GNU General Public License for more details.                          *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the                         *
- * Free Software Foundation, Inc.,                                       *
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                       *
- *************************************************************************/
+ * All rights reserved. Ralink's source code is an unpublished work and the
+ * use of a copyright notice does not imply otherwise. This source code
+ * contains confidential trade secret material of Ralink Tech. Any attemp
+ * or participation in deciphering, decoding, reverse engineering or in any
+ * way altering the source code is stricitly prohibited, unless the prior
+ * written consent of Ralink Technology, Inc. is obtained.
+ ***************************************************************************/
 
+/****************************************************************************
+
+	Abstract:
+
+	All MAC80211/CFG80211 Related Structure & Definition.
+
+***************************************************************************/
+#ifndef __CFG80211_H__
+#define __CFG80211_H__
 
 #ifdef RT_CFG80211_SUPPORT
 
 #include <linux/ieee80211.h>
 
+typedef enum _NDIS_HOSTAPD_STATUS {
+	Hostapd_Diable = 0,
+	Hostapd_EXT,
+	Hostapd_CFG
+} NDIS_HOSTAPD_STATUS, *PNDIS_HOSTAPD_STATUS;
+
 typedef struct __CFG80211_CB {
 
+    #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
+    #define ieee80211_band nl80211_band
+    #define IEEE80211_BAND_2GHZ NL80211_BAND_2GHZ
+    #define IEEE80211_BAND_5GHZ NL80211_BAND_5GHZ
+    #define IEEE80211_NUM_BANDS NUM_NL80211_BANDS
+    #endif
+
 	/* we can change channel/rate information on the fly so we backup them */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0)
-	struct ieee80211_supported_band Cfg80211_bands[NUM_NL80211_BANDS];
-#else
 	struct ieee80211_supported_band Cfg80211_bands[IEEE80211_NUM_BANDS];
-#endif
 	struct ieee80211_channel *pCfg80211_Channels;
 	struct ieee80211_rate *pCfg80211_Rates;
 
@@ -51,8 +57,11 @@ typedef struct __CFG80211_CB {
 
 	/* channel information */
 	struct ieee80211_channel ChanInfo[MAX_NUM_OF_CHANNELS];
-} CFG80211_CB;
 
+	/* to protect scan status */
+	spinlock_t scan_notify_lock;
+
+} CFG80211_CB;
 
 
 
@@ -62,9 +71,9 @@ Routine Description:
 	Register MAC80211 Module.
 
 Arguments:
-	pAd				- WLAN control block pointer
-	pDev			- Generic device interface
-	pNetDev			- Network device
+	pAd		- WLAN control block pointer
+	pDev		- Generic device interface
+	pNetDev		- Network device
 
 Return Value:
 	NONE
@@ -76,12 +85,10 @@ Note:
 	Can not use pNetDev to replace pDev; Or kernel panic.
 ========================================================================
 */
-BOOLEAN CFG80211_Register(
-	VOID						*pAd,
-	struct device				*pDev,
-	struct net_device			*pNetDev);
-
+BOOLEAN CFG80211_Register(void *pAd, struct device *pDev, struct net_device *pNetDev);
 
 #endif /* RT_CFG80211_SUPPORT */
+
+#endif /* __CFG80211_H__ */
 
 /* End of cfg80211.h */
